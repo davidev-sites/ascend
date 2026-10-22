@@ -258,6 +258,28 @@ button.chk{position:relative;width:44px;height:44px;min-width:44px;min-height:44
 }
 @media(prefers-reduced-motion:reduce){.bar>div{transition:none}}
 
+/* Cabeçalho e navegação protegidos pelas áreas seguras do aparelho. */
+:root{--header-height:calc(74px + env(safe-area-inset-top,0px))}
+#hdr{position:fixed;top:0;left:0;right:0;z-index:40;min-height:calc(74px + env(safe-area-inset-top,0px));padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px),calc((100% - 560px)/2));padding-right:max(16px,env(safe-area-inset-right,0px),calc((100% - 560px)/2))}
+#view{padding-top:calc(var(--header-height) + 24px);padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+#nav{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+html{scroll-padding-top:calc(var(--header-height) + 12px)}
+.task-form{display:flex;flex-direction:column;gap:12px;min-width:0}
+.task-form>div{position:static!important;margin:0!important;min-width:0;width:100%}
+.task-form label{display:block;margin:0 0 6px}
+.task-form input:not([type=checkbox]),.task-form select,.task-form textarea{display:block;position:static!important;margin:0!important;width:100%;min-width:0;max-width:100%;min-height:48px;box-sizing:border-box}
+.task-form input[type=date],.task-form input[type=time]{appearance:none;-webkit-appearance:none}
+.task-form label.row{display:flex;min-height:48px;align-items:center;gap:10px}
+.task-form input[type=checkbox]{width:24px;min-height:24px;flex:0 0 24px}
+.personal-purpose{font-size:1.15em;font-weight:700;white-space:pre-wrap}
+.objective-open{display:flex;flex-direction:column;gap:12px;text-align:left}
+.objective-open .bar{width:100%}
+.calendar-day .task-count{font-size:10px;line-height:12px;color:var(--mut);display:block}
+.calendar-day .task-count.all-done{color:#7cff9b}
+.calendar-day{min-height:64px}
+#updateNotice{position:relative;margin-top:var(--header-height)}
+#updateNotice:not([hidden])+#view{padding-top:24px}
+
 </style>
 </head>
 <body class="f2">
@@ -438,9 +460,9 @@ function normalizeState(input){
       const v=stateObject(h)?finiteNumber(h.v):null;
       if(stateObject(h)&&validRecordDate(h.d)&&v!==null) hist.push(Object.assign({},h,{v}));else skipped++;
     });
-    const current=number(g.current,0),target=number(g.target,1),start=validDate(g.start)?g.start:(hist.length?hist.map(h=>h.d).sort()[0]:s.startedDate);
+    const current=number(g.current,0),target=g.simple&&g.target===null?null:number(g.target,1),start=validDate(g.start)?g.start:(hist.length?hist.map(h=>h.d).sort()[0]:s.startedDate);
     const initial=finiteNumber(g.initial)!==null?Number(g.initial):(hist.length?hist.slice().sort((a,b)=>a.d.localeCompare(b.d))[0].v:g.type==='Peso'&&current>target?current:0);
-    return Object.assign({},g,{id:safeId(g.id,map),title:g.title,type:text(g.type,'Outro'),unit:text(g.unit),current,target,start,due:validDate(g.due)?g.due:todayKey(),initial,hist});
+    return Object.assign({},g,{id:safeId(g.id,map),title:g.title,targetMissing:g.targetMissing===true||g.target===undefined||g.target===null||g.target==='',type:text(g.type,'Outro'),unit:text(g.unit),current,target,start,due:validDate(g.due)?g.due:todayKey(),initial,hist});
   });
   state.gym=list('gym',(g,map)=>{
     if(!text(g.ex).trim()||!validRecordDate(g.date)||finiteNumber(g.load)===null||finiteNumber(g.reps,1)===null||finiteNumber(g.sets===undefined?1:g.sets,1)===null) return null;
@@ -482,7 +504,7 @@ function normalizeState(input){
   state.days={};
   if(stateObject(d.days)) Object.keys(d.days).forEach(k=>{
     const raw=d.days[k];
-    if(!validRecordDate(k)||!stateObject(raw)){skipped++;return;}
+    if(!validDate(k)||!stateObject(raw)){skipped++;return;}
     const day=Object.assign({},raw,{done:{}});
     ['focus'].forEach(n=>{if(raw[n]!==undefined) day[n]=integer(raw[n],0);});
     if(raw.water!==undefined)day.water=number(raw.water,0);
@@ -828,8 +850,9 @@ function vHoje(){
     (S.tasks.length?'<button type="button" class="mini" style="width:100%;margin-top:8px" onclick="openTaskManager()">Gerenciar todas as tarefas ('+S.tasks.length+')</button>':'')+'</section>';
   h+=waterCard(k)+focusCard(k)+checkinCard(k);
   const purpose=S.settings.purpose||'Escreva uma frase que te lembra por que você cuida da sua rotina.';
-  h+='<div class="card"><div class="row sp"><h3 style="margin:0">Meu porquê</h3><button type="button" class="mini" aria-label="Editar meu porquê" onclick="editPurpose()">✎ Editar</button></div>'+
-    '<p style="overflow-wrap:anywhere;margin-bottom:0">'+esc(purpose)+'</p></div>';
+  h+=purposeDailyCard(); /* bloco diário */
+  /*
+    '<p style="overflow-wrap:anywhere;margin-bottom:0">'+esc(purpose)+'</p></div>'; */
   return h;
 }
 function todayTaskList(){
@@ -1019,51 +1042,6 @@ function recurrenceLabel(t){
   if(r.type==='monthly') return 'Todo dia '+(r.monthDay||pk(r.anchor||todayKey()).getDate())+' do mês';
   return (t.days||[]).map(d=>WD[d]).join(', ');
 }
-function editTask(id){
-  const t=id?S.tasks.find(x=>x.id===id):null;
-  taskFormDraft={id:t?t.id:uid(),isNew:!t,subs:JSON.parse(JSON.stringify(t?t.subs:[]))};taskDuplicateDraft=null;
-  const tt=t||{name:'',time:'08:00',days:[1,2,3,4,5],points:20,area:'Estudo',subs:[],remind:false};
-  const r=tt.recurrence||{type:'weekly',anchor:tt.createdDate||todayKey(),interval:1,monthDay:pk(todayKey()).getDate()};
-  const selectedDays=tt.days||[];
-  openModal('<h2 style="margin:0 0 4px">'+(t?'Editar tarefa':'Nova tarefa')+'</h2>'+
-    '<p class="sm mut">Escolha quando ela aparece. As conclusões anteriores mantêm seus pontos.</p>'+
-    '<label for="ftName">Nome da tarefa</label><input id="ftName" maxlength="160" value="'+esc(tt.name)+'" placeholder="Ex.: estudar matemática">'+
-    '<div class="grid2"><div><label for="ftTime">Horário</label><input id="ftTime" type="time" value="'+esc(tt.time||'08:00')+'"></div>'+
-    '<div><label for="ftPts">Pontos</label><input id="ftPts" type="number" min="1" max="10000" step="1" value="'+tt.points+'"></div></div>'+
-    '<label for="ftRec">Repetição</label><select id="ftRec" onchange="setTaskRecurrenceFields()">'+
-    [['weekly','Dias da semana'],['interval','A cada X dias'],['monthly','Uma vez por mês']].map(([v,l])=>'<option value="'+v+'" '+(r.type===v?'selected':'')+'>'+l+'</option>').join('')+'</select>'+
-    '<label for="ftStart">Começa em</label><input id="ftStart" type="date" value="'+esc(r.anchor||tt.createdDate||todayKey())+'">'+
-    '<div id="ftWeekly"><label>Dias da semana</label><div class="chips" id="ftDays">'+
-    WD.map((d,i)=>'<button type="button" aria-pressed="'+selectedDays.includes(i)+'" class="chip '+(selectedDays.includes(i)?'on':'')+'" data-d="'+i+'" onclick="this.classList.toggle(\'on\');this.setAttribute(\'aria-pressed\',this.classList.contains(\'on\'))">'+d+'</button>').join('')+'</div>'+
-    '<div class="chips" style="margin-top:7px"><button type="button" class="chip" onclick="pickDays([1,2,3,4,5])">Dias úteis</button>'+
-    '<button type="button" class="chip" onclick="pickDays([0,1,2,3,4,5,6])">Todos os dias</button></div>'+
-    (S.tasks.some(x=>x.id!==id)?'<label for="ftSameDays">Usar os mesmos dias de outra tarefa</label><select id="ftSameDays" onchange="copyTaskDays(this.value)"><option value="">Escolher tarefa</option>'+
-    S.tasks.filter(x=>x.id!==id&&(!x.recurrence||x.recurrence.type==='weekly')).map(x=>'<option value="'+x.id+'">'+esc(x.name)+' · '+esc(recurrenceLabel(x))+'</option>').join('')+'</select>':'')+'</div>'+
-    '<div id="ftInterval"><label for="ftEvery">Repetir a cada quantos dias?</label><input id="ftEvery" type="number" min="1" max="3650" step="1" value="'+(r.interval||1)+'"><div class="sm mut">A contagem começa na data acima.</div></div>'+
-    '<div id="ftMonthly"><label for="ftMonthDay">Dia do mês</label><input id="ftMonthDay" type="number" min="1" max="31" step="1" value="'+(r.monthDay||pk(todayKey()).getDate())+'"><div class="sm mut">Em meses mais curtos, aparece no último dia do mês.</div></div>'+
-    '<label for="ftArea">Área da vida</label><select id="ftArea">'+AREAS.map(a=>'<option '+(tt.area===a?'selected':'')+'>'+esc(a)+'</option>').join('')+'</select>'+
-    '<label for="ftSubs">Subtarefas · uma por linha (opcional)</label><textarea id="ftSubs" placeholder="Matemática&#10;Revisão">'+esc(tt.subs.map(s=>s.name).join('\n'))+'</textarea>'+
-    '<div class="sm mut">Cada parte concluída vale uma fração dos pontos da tarefa.</div>'+
-    '<label class="row" for="ftRem" style="gap:8px;margin-top:14px"><input type="checkbox" id="ftRem" style="width:24px;min-height:24px" '+(tt.remind?'checked':'')+'> Avisar no horário</label>'+
-    '<div class="sm mut">O lembrete funciona enquanto o app estiver aberto, com a permissão ativada nos ajustes.</div>'+
-    '<div class="row" style="margin-top:16px;gap:8px"><button type="button" class="gh" style="flex:1" onclick="closeModal()">Cancelar</button>'+
-    '<button type="button" class="bt" style="flex:2" onclick="saveTask(\''+(t?t.id:'')+'\')">Salvar tarefa</button></div>'+
-    (t?'<button type="button" class="gh" style="width:100%;margin-top:8px" onclick="duplicateTask(\''+t.id+'\')">Duplicar tarefa</button>'+
-    '<button type="button" class="dgr" style="width:100%;margin-top:8px" onclick="delTask(\''+t.id+'\')">Excluir tarefa</button>':''));
-  setTaskRecurrenceFields();
-}
-function setTaskRecurrenceFields(){
-  const type=document.getElementById('ftRec').value;
-  document.getElementById('ftWeekly').hidden=type!=='weekly';
-  document.getElementById('ftInterval').hidden=type!=='interval';
-  document.getElementById('ftMonthly').hidden=type!=='monthly';
-}
-function pickDays(arr){
-  document.querySelectorAll('#ftDays .chip').forEach(c=>{
-    const on=arr.includes(+c.dataset.d);c.classList.toggle('on',on);c.setAttribute('aria-pressed',on);
-  });
-}
-function copyTaskDays(id){const task=S.tasks.find(t=>t.id===id);if(task) pickDays(task.days||[]);}
 function openTaskManager(){
   openModal('<h2>Todas as tarefas</h2><p class="sm mut">Edite qualquer tarefa, mesmo quando ela não está programada para hoje.</p>'+
     '<label for="manageTaskSearch">Buscar por nome ou área</label><input id="manageTaskSearch" type="search" placeholder="Ex.: leitura, saúde" oninput="filterTaskManager(this.value)">'+
@@ -1092,55 +1070,6 @@ function retainedSubtasks(old,names){
     out[i]={id:match?match.id:uid(),name};
   });
   return out;
-}
-function saveTask(id){
-  const name=document.getElementById('ftName').value.trim();
-  if(!name){toast('Dê um nome para a tarefa');return;}
-  const points=Number(document.getElementById('ftPts').value);
-  if(!Number.isInteger(points)||points<1||points>10000){toast('Use de 1 a 10.000 pontos inteiros');return;}
-  const type=document.getElementById('ftRec').value,anchor=document.getElementById('ftStart').value;
-  if(!validDate(anchor)){toast('Escolha uma data de início válida');return;}
-  const days=[...document.querySelectorAll('#ftDays .chip.on')].map(c=>+c.dataset.d);
-  if(type==='weekly'&&!days.length){toast('Escolha pelo menos um dia da semana');return;}
-  const interval=Number(document.getElementById('ftEvery').value),monthDay=Number(document.getElementById('ftMonthDay').value);
-  if(type==='interval'&&(!Number.isInteger(interval)||interval<1||interval>3650)){toast('Informe um intervalo inteiro de 1 a 3.650 dias');return;}
-  if(type==='monthly'&&(!Number.isInteger(monthDay)||monthDay<1||monthDay>31)){toast('Use um dia do mês entre 1 e 31');return;}
-  if(!id&&(!taskFormDraft||!taskFormDraft.isNew)) taskFormDraft={id:uid(),isNew:true,subs:[]};
-  const targetId=id||taskFormDraft.id,old=S.tasks.find(t=>t.id===targetId);
-  if(id&&!old) return;
-  const names=document.getElementById('ftSubs').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  if(names.length>50||names.some(n=>n.length>160)){toast('Use até 50 subtarefas, com até 160 caracteres cada');return;}
-  const previous=old?JSON.parse(JSON.stringify(old)):null,previousStart=S.settings.startedDate;
-  if(old) freezeTaskHistory(old);
-  const data={
-    name,time:document.getElementById('ftTime').value||'08:00',days,points,
-    area:document.getElementById('ftArea').value,remind:document.getElementById('ftRem').checked,
-    subs:retainedSubtasks(old?old.subs:(taskFormDraft?.subs||[]),names),createdDate:old?old.createdDate||anchor:todayKey(),
-    recurrence:{type,anchor,interval:type==='interval'?interval:1,monthDay:type==='monthly'?monthDay:pk(anchor).getDate()}
-  };
-  if(taskFormDraft)taskFormDraft.subs=JSON.parse(JSON.stringify(data.subs));
-  if(old) Object.assign(old,data);else S.tasks.push(Object.assign({id:targetId},data));
-  if(anchor<S.settings.startedDate) S.settings.startedDate=anchor;
-  if(save()===false){
-    S.settings.startedDate=previousStart;
-    if(previous)S.tasks[S.tasks.findIndex(t=>t.id===targetId)]=previous;
-    else S.tasks=S.tasks.filter(t=>t.id!==targetId);
-    return;
-  }
-  taskFormDraft=null;
-  closeModal();render();toast('Tarefa salva');
-}
-function duplicateTask(id){
-  const source=S.tasks.find(t=>t.id===id);if(!source) return;
-  const copy=JSON.parse(JSON.stringify(source));
-  if(!taskDuplicateDraft||taskDuplicateDraft.sourceId!==id) taskDuplicateDraft={sourceId:id,id:uid()};
-  copy.id=taskDuplicateDraft.id;copy.name=(source.name+' (cópia)').slice(0,160);copy.createdDate=todayKey();
-  copy.recurrence=Object.assign({},copy.recurrence,{anchor:todayKey()});
-  copy.subs=(copy.subs||[]).map(s=>({id:uid(),name:s.name}));
-  S.tasks.push(copy);
-  if(save()===false){S.tasks=S.tasks.filter(t=>t.id!==copy.id);return;}
-  taskDuplicateDraft=null;
-  closeModal();render();toast('Tarefa duplicada');editTask(copy.id);
 }
 function delTask(id){
   const t=S.tasks.find(x=>x.id===id);if(!t) return;
@@ -1203,7 +1132,6 @@ function savePurpose(){
 
 
 /* ============ METAS E GRÁFICOS ============ */
-function goalFraction(g,value){const origin=g.initial??g.hist?.[0]?.v??0,distance=g.target-origin;return distance===0?1:Math.max(0,Math.min(1,(value-origin)/distance));}
 function lineChart(series,labels){
   const vals=series.flatMap(s=>s.values).filter(Number.isFinite);if(!vals.length)return '<p class="mut sm">Registre um valor para ver o gráfico.</p>';
   let min=Math.min(...vals),max=Math.max(...vals);if(min===max){min=Math.max(0,min-1);max+=1;}
@@ -1211,36 +1139,8 @@ function lineChart(series,labels){
   series.forEach(s=>{const coords=s.values.map((v,i)=>Number.isFinite(v)?(12+(s.x?.[i]??i/Math.max(1,n-1))*296).toFixed(1)+','+(112-(v-min)/(max-min)*94).toFixed(1):null).filter(Boolean).join(' ');h+='<polyline points="'+coords+'" fill="none" stroke="'+s.color+'" stroke-width="2.5" '+(s.dash?'stroke-dasharray="5 5"':'')+'/>';});
   return h+'<text x="12" y="133" fill="var(--mut)" font-size="10">'+esc(fmtNum(min))+'</text><text x="308" y="133" text-anchor="end" fill="var(--mut)" font-size="10">'+esc(fmtNum(max))+'</text></svg>';
 }
-function goalChart(g){
-  const start=g.initial??g.hist?.[0]?.v??0,entries=(g.hist||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)),keys=[...new Set([g.start,...entries.map(e=>e.d),todayKey(),g.due])].filter(validDate).sort(),span=Math.max(1,pk(g.due)-pk(g.start));
-  const actual=keys.map(k=>{const found=entries.filter(e=>e.d<=k).at(-1);return k>todayKey()?null:k===todayKey()?g.current:found?.v??start;}),ideal=keys.map(k=>start+(g.target-start)*Math.max(0,Math.min(1,(pk(k)-pk(g.start))/span))),x=keys.map(k=>(pk(k)-pk(keys[0]))/Math.max(1,pk(keys.at(-1))-pk(keys[0])));
-  return lineChart([{values:ideal,x,color:'var(--mut)',dash:true},{values:actual,x,color:'var(--acc)'}],'Valores da meta: linha contínua é seu registro; tracejada é o ritmo ideal.')+'<p class="sm mut">Linha contínua: seus valores · tracejada: ritmo ideal<br>'+fmtBR(g.start)+' → '+fmtBR(g.due)+'</p>';
-}
-function vMetas(){
-  let h='<div class="page-heading"><h1>Minhas metas</h1><p>Objetivos maiores, um avanço por vez.</p></div>';
-  if(!S.goals.length)return h+'<section class="card empty"><h2>O que você quer alcançar?</h2><p class="mut">Pode ser uma quantia, uma habilidade ou uma conquista pessoal.</p><button class="bt" onclick="editGoal()">Criar primeira meta</button></section>';
-  S.goals.forEach(g=>{const pct=Math.round(goalFraction(g,g.current)*100),ideal=Math.round(Math.max(0,Math.min(1,(pk(todayKey())-pk(g.start))/Math.max(1,pk(g.due)-pk(g.start))))*100),left=Math.round((pk(g.due)-pk(todayKey()))/864e5);
-    h+='<section class="card"><div class="row sp"><div><h2 class="item-heading">'+esc(g.title)+'</h2><div class="sm mut">'+esc(g.type)+' · até '+fmtBR(g.due)+'</div></div><button class="mini" aria-label="Editar meta '+esc(g.title)+'" onclick="editGoal(\''+g.id+'\')">'+icon('edit')+'</button></div><p class="goal-value">'+fmtNum(g.current)+' <span class="sm mut">/ '+fmtNum(g.target)+' '+esc(g.unit)+'</span></p><div class="row sp sm"><span>'+pct+'% do caminho</span><span>'+(pct>=100?'Concluída':left<0?'Prazo encerrado':left+' dias restantes')+'</span></div><div class="bar"><div style="width:'+pct+'%"></div></div>'+goalChart(g)+'<p class="sm mut">'+(pct>=100?'Objetivo alcançado. Você pode continuar registrando seus valores.':pct>=ideal?'Seu avanço está no ritmo planejado.':'Seu avanço está '+(ideal-pct)+' pontos percentuais abaixo do ritmo planejado.')+'</p><button class="gh full" onclick="addProgress(\''+g.id+'\')">Registrar valor atual</button></section>';
-  });return h;
-}
 function fmtNum(n){return Number(n).toLocaleString('pt-BR',{maximumFractionDigits:2});}
-function editGoal(id){
-  const g=S.goals.find(x=>x.id===id),v=g||{title:'',type:'Outro',unit:'',current:0,target:100,due:dk(addDays(new Date(),30))};
-  openModal('<h2>'+(g?'Editar meta':'Nova meta')+'</h2><label for="fgTitle">Nome da meta</label><input id="fgTitle" maxlength="160" value="'+esc(v.title)+'" placeholder="Ex.: concluir um curso"><label for="fgType">Tipo</label><select id="fgType" onchange="syncUnit()">'+['Dinheiro','Seguidores','Peso','Estudo','Outro'].map(t=>'<option '+(v.type===t?'selected':'')+'>'+t+'</option>').join('')+'</select><div class="grid2"><div><label for="fgCur">Valor atual</label><input id="fgCur" type="number" min="0" step="any" value="'+v.current+'"></div><div><label for="fgTarget">Valor desejado</label><input id="fgTarget" type="number" min="0" step="any" value="'+v.target+'"></div></div><p class="sm mut">Informe o total atual. O valor desejado também pode ser menor que o inicial.</p><label for="fgUnit">Unidade</label><input id="fgUnit" maxlength="30" value="'+esc(v.unit)+'" placeholder="R$, kg, horas, seguidores"><label for="fgDue">Prazo</label><input id="fgDue" type="date" value="'+v.due+'"><div class="modal-actions"><button class="gh" onclick="closeModal()">Cancelar</button><button class="bt" onclick="saveGoal(\''+(id||'')+'\')">Salvar meta</button></div>'+(g?'<button class="dgr full" onclick="delGoal(\''+id+'\')">Excluir meta</button>':''));
-}
-function syncUnit(){const units={Dinheiro:'R$',Peso:'kg',Seguidores:'seguidores'};document.getElementById('fgUnit').value=units[document.getElementById('fgType').value]||'';}
-function saveGoal(id){
-  const title=document.getElementById('fgTitle').value.trim(),current=finiteNumber(document.getElementById('fgCur').value),target=finiteNumber(document.getElementById('fgTarget').value),due=document.getElementById('fgDue').value;
-  if(!title||current===null||target===null||!validDate(due)){toast('Preencha o nome, os valores válidos e o prazo.');return;}
-  const old=S.goals.find(x=>x.id===id);if(due<(old?.start||todayKey())){toast('O prazo precisa ser igual ou posterior ao início da meta.');return;}
-  const d={title,type:document.getElementById('fgType').value,current,target,unit:document.getElementById('fgUnit').value.trim(),due},previous=old?JSON.parse(JSON.stringify(old)):null,newId=old?old.id:uid();
-  if(old){Object.assign(old,d);old.hist.push({d:todayKey(),v:current});}else S.goals.push({...d,id:newId,start:todayKey(),initial:current,hist:[{d:todayKey(),v:current}]});
-  if(save()===false){if(old)Object.assign(old,previous);else S.goals=S.goals.filter(g=>g.id!==newId);return;}closeModal();render();toast('Meta salva');
-}
 function delGoal(id){const index=S.goals.findIndex(g=>g.id===id);if(index<0)return;const [entry]=S.goals.splice(index,1);if(save()===false){S.goals.splice(index,0,entry);return;}closeModal();render();toast('Meta excluída',()=>{if(!S.goals.some(g=>g.id===id))S.goals.splice(index,0,entry);});}
-function addProgress(id){const g=S.goals.find(x=>x.id===id);if(!g)return;openModal('<h2>Registrar valor atual</h2><p>'+esc(g.title)+'</p><label for="fgVal">Total atual ('+esc(g.unit||'unidades')+')</label><input id="fgVal" type="number" min="0" step="any" value="'+g.current+'"><p class="sm mut">Digite o total, e não apenas a diferença desde a última vez.</p><div class="modal-actions"><button class="gh" onclick="closeModal()">Cancelar</button><button class="bt" onclick="saveProgress(\''+id+'\')">Salvar valor</button></div>');}
-function saveProgress(id){const g=S.goals.find(x=>x.id===id),v=finiteNumber(document.getElementById('fgVal').value);if(v===null){toast('Informe um número válido, igual ou maior que zero.');return;}const old=g.current;g.current=v;g.hist.push({d:todayKey(),v});if(save()===false){g.current=old;g.hist.pop();return;}closeModal();render();toast('Valor registrado');}
-
 /* ============ PROGRESSO E RELATÓRIO ============ */
 function rangeKeys(start,end){const keys=[];for(let d=pk(start);dk(d)<=end;d=addDays(d,1))keys.push(dk(d));return keys;}
 function areaPoints(keys){
@@ -1507,6 +1407,7 @@ function migrateEvolution(state){
   });
   const wasV3=state.meta.evolutionVersion===1;
   state.goals.forEach((g,i)=>{
+    if(g.simple)return;
     if(!['money','habit','number','milestone'].includes(g.kind)){
       g.kind=g.type==='Dinheiro'?'money':'number';
       g.legacyCurrent=g.current;
@@ -1531,7 +1432,7 @@ function validDailySummary(s){
 }
 function buildDaySummary(k){
   const day=S.days[k]||{},done=day.done||{},byId=new Map(tasksOf(k).map(t=>[t.id,t]));
-  Object.keys(done).forEach(id=>{if(!byId.has(id))byId.set(id,S.tasks.find(t=>t.id===id)||{id,name:done[id].taskName||'Tarefa arquivada',points:done[id].taskPoints||0,area:done[id].area||'Pessoal',subs:[]});});
+  Object.keys(done).forEach(id=>{if(k<=todayKey()&&!byId.has(id))byId.set(id,S.tasks.find(t=>t.id===id)||{id,name:done[id].taskName||'Tarefa arquivada',points:done[id].taskPoints||0,area:done[id].area||'Pessoal',subs:[]});});
   const tasks=[...byId.values()].map(t=>{const e=done[t.id];return {id:t.id,name:e?.taskName||t.name,area:e?.area||t.area,points:ptsOfTask(t,e),possible:e?.taskPoints??t.points,full:e?.full===true,subs:cloneValue(t.subs||[]),time:t.time||''};});
   const focus=Math.max(0,day.focus||0),earnedPoints=tasks.reduce((n,t)=>n+t.points,0)+focus*15,possiblePoints=tasks.reduce((n,t)=>n+t.possible,0)+focus*15,goalPoints=day.goalPoints||S.settings.goalPoints||100;
   const transactions=S.money.filter(x=>x.date===k).map(cloneValue),expense=transactions.filter(x=>x.type==='out').reduce((n,x)=>n+x.value,0),income=transactions.filter(x=>x.type==='in').reduce((n,x)=>n+x.value,0);
@@ -1681,25 +1582,25 @@ function vCal(){
   WD.forEach(d=>h+='<span class="weekday">'+d+'</span>');for(let i=0;i<first.getDay();i++)h+='<span class="d empty"></span>';
   for(let n=1;n<=count;n++){
     const k=y+'-'+pad(m)+'-'+pad(n),s=k<=today?S.days[k]?.summary:null,rest=(s?s.rest:S.settings.restDays.includes(pk(k).getDay()))||S.days[k]?.autoRest,labels=[];
+    const list=(S.days[k]?.summary||readDay(k)).tasks,allDone=list.length>0&&list.every(t=>t.full);if(list.length)labels.push(list.length+' tarefa(s), '+(allDone?'todas concluídas':'pendentes'));
     if(s?.met)labels.push('meta batida');if(s?.transactions?.length)labels.push('dinheiro');if(s?.waterMl)labels.push('água');if(s?.mood||s?.sentAt)labels.push('dia enviado');
-    h+='<button class="d calendar-day '+(s?.met?'met ':'')+(rest?'rest-day ':'')+(k===today?'today':'')+'" aria-label="'+k+(labels.length?', '+labels.join(', '):'')+(rest?', folga':'')+'" onclick="dayDetail(\''+k+'\')"><span class="n">'+n+'</span><span class="day-dots" aria-hidden="true">'+(s?.met?'<i class="dot points"></i>':'')+(s?.transactions?.length?'<i class="dot money"></i>':'')+(s?.waterMl?'<i class="dot water"></i>':'')+(s?.mood||s?.sentAt?'<i class="dot mood"></i>':'')+'</span></button>';
+    h+='<button class="d calendar-day '+(s?.met?'met ':'')+(rest?'rest-day ':'')+(k===today?'today':'')+'" aria-label="'+k+(labels.length?', '+labels.join(', '):'')+(rest?', folga':'')+'" onclick="dayDetail(\''+k+'\')"><span class="n">'+n+'</span>'+(list.length?'<span class="task-count '+(allDone?'all-done':'')+'">'+(allDone?'✓ ':'○ ')+list.length+'</span>':'')+'<span class="day-dots" aria-hidden="true">'+(s?.met?'<i class="dot points"></i>':'')+(s?.transactions?.length?'<i class="dot money"></i>':'')+(s?.waterMl?'<i class="dot water"></i>':'')+(s?.mood||s?.sentAt?'<i class="dot mood"></i>':'')+'</span></button>';
   }
-  return h+'</div></section><div class="calendar-legend sm mut"><span><i class="dot points"></i> Meta batida</span><span><i class="dot money"></i> Dinheiro</span><span><i class="dot water"></i> Água</span><span><i class="dot mood"></i> Humor ou envio</span></div><p class="sm mut">Dias apagados são folga. Os dias anteriores guardam o retrato do fechamento; alterações posteriores não reescrevem esse histórico.</p>';
+  return h+'</div></section><div class="calendar-legend sm mut"><span><i class="dot points"></i> Meta batida</span><span><i class="dot money"></i> Dinheiro</span><span><i class="dot water"></i> Água</span><span><i class="dot mood"></i> Humor ou envio</span></div><p class="sm mut">Dias apagados são folga. ○ indica tarefas pendentes; ✓ indica todas concluídas. Conclusões feitas aqui corrigem o histórico do dia.</p>';
 }
 function dayDetail(k){
   const future=k>todayKey(),s=readDay(k),date=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(pk(k));
-  if(future){openModal('<h2>Visão do dia</h2><p>'+esc(date)+'</p><p class="mut">Este dia ainda não aconteceu.</p><button class="bt" onclick="closeModal()">Fechar</button>');return;}
   const pct=s.tasks.length?s.completedTasks/s.tasks.length*100:0;
   let h='<h2>Visão do dia</h2><p class="day-date">'+esc(date)+'</p><div class="day-head"><strong>'+fmtNum(s.earnedPoints)+' / '+fmtNum(s.possiblePoints)+' pontos</strong><span>Meta do dia: '+fmtNum(s.goalPoints)+' pontos</span><span class="sm">'+(s.met?'Meta batida · bônus de '+s.bonusPoints+' pontos':s.rest?'Dia de folga':'Meta ainda não atingida')+'</span></div>';
   if(!s.hasRecords)h+='<p class="notice">Dia sem registros. '+(s.tasks.length?'Havia '+s.tasks.length+' tarefa(s) prevista(s), listadas abaixo.':'Nenhuma atividade foi registrada neste dia.')+'</p>';
   h+='<section class="day-section"><h3>Tarefas do dia</h3><p class="sm mut">'+s.completedTasks+' concluída(s) · '+s.incompleteTasks+' não concluída(s)</p><div class="bar" role="progressbar" aria-label="Tarefas concluídas" aria-valuenow="'+s.completedTasks+'" aria-valuemin="0" aria-valuemax="'+Math.max(1,s.tasks.length)+'"><div style="width:'+pct+'%"></div></div>';
-  h+=s.tasks.length?s.tasks.map(t=>'<article class="day-task '+(t.full?'completed':'pending')+'"><span class="task-status">'+(t.full?'✓ Concluída':'○ Não concluída')+'</span><strong>'+esc(t.name)+'</strong><span class="sm mut">'+(t.time?esc(t.time)+' · ':'')+esc(t.area)+' · '+fmtNum(t.points)+' / '+fmtNum(t.possible)+' pontos</span>'+(!t.full&&t.points?'<span class="sm">Parte da tarefa foi feita.</span>':'')+(S.days[k]?.done?.[t.id]?.completedLate?'<span class="sm mut">Conclusão tardia anotada após o fechamento.</span>':'')+'</article>').join(''):'<p class="mut sm">Não havia tarefas programadas.</p>';
+  h+=s.tasks.length?s.tasks.map(t=>'<article class="day-task '+(t.full?'completed':'pending')+'"><span class="task-status">'+(t.full?'✓ Concluída':'○ Não concluída')+'</span><strong>'+esc(t.name)+'</strong><span class="sm mut">'+(t.time?esc(t.time)+' · ':'')+esc(t.area)+' · '+fmtNum(t.points)+' / '+fmtNum(t.possible)+' pontos</span>'+(!t.full&&t.points?'<span class="sm">Parte da tarefa foi feita.</span>':'')+(S.days[k]?.done?.[t.id]?.completedLate?'<span class="sm mut">Conclusão tardia anotada após o fechamento.</span>':'')+'<button class="mini" onclick="toggleCalendarTask(\''+t.id+'\',\''+k+'\')">'+(t.full?'Marcar pendente':'Concluir tarefa')+'</button></article>').join(''):'<p class="mut sm">Não havia tarefas programadas.</p>';
   h+='</section><section class="day-section"><h3>Dinheiro do dia</h3><div class="grid2"><div class="stat"><b>'+cash(s.expense)+'</b><span>Saiu</span></div><div class="stat"><b>'+cash(s.income)+'</b><span>Entrou</span></div></div>';
   h+=s.transactions.length?s.transactions.map(t=>'<div class="day-money"><div><strong>'+esc(t.cat)+'</strong><span class="sm mut">'+esc(t.desc||'Sem descrição')+(t.balanceAdjustment?' · ajuste de saldo':'')+'</span></div><strong>'+(t.type==='in'?'+':'−')+cash(t.value)+'</strong></div>').join(''):'<p class="mut sm">Nenhum lançamento neste dia.</p>';
   h+='</section><section class="day-section"><h3>Água</h3><strong>'+fmtNum(s.waterMl)+' ml</strong><p class="sm mut">'+fmtNum(s.cups)+' copos de 250 ml</p></section><section class="day-section"><h3>Como foi meu dia</h3><p class="sm">Humor: '+(s.mood?['😞 Muito mal','😕 Mal','🙂 Neutro','😄 Bem','🤩 Muito bem'][s.mood-1]:'sem registro')+'<br>Energia: '+(s.energy?s.energy+'/5':'sem registro')+'<br>Sono: '+(s.sleep!==null?fmtNum(s.sleep)+' horas':'sem registro')+'</p><p class="user-note">'+esc(s.dayText||'Nenhum texto enviado.')+'</p>'+(s.sentAt?'<p class="sm sent-status">Enviado em '+esc(localDateTime(s.sentAt))+'</p>':'')+(s.note?'<h4>Nota do dia</h4><p class="user-note">'+esc(s.note)+'</p>':'')+'</section>';
   if(s.gym.length||s.activities.length)h+='<section class="day-section"><h3>Treino e atividade física</h3>'+s.activities.map(a=>'<p>'+esc(a.name)+' · '+fmtNum(a.minutes)+' min</p>').join('')+s.gym.map(g=>'<p>'+esc(g.ex)+' · '+fmtNum(g.load)+' kg · '+g.sets+' × '+g.reps+'</p>').join('')+'</section>';
   if(s.food.length){const total=foodTotals(s.food);h+='<section class="day-section"><h3>Alimentação</h3><p class="sm">'+Math.round(total.k)+' kcal · proteína '+Math.round(total.p)+' g · carboidratos '+Math.round(total.c)+' g · gordura '+Math.round(total.f)+' g</p>'+s.food.map(f=>'<p class="sm">'+esc(f.name)+' · '+fmtNum(f.qty)+' × '+esc(f.unitL)+' · '+Math.round(f.kcal)+' kcal</p>').join('')+'</section>';}
-  h+='<p class="sm mut">'+(k<todayKey()?'Fechamento preservado. As correções posteriores no livro de lançamentos não alteram este retrato.':'Este resumo acompanha os registros de hoje até o fechamento do dia.')+'</p><button class="bt" onclick="closeModal()">Fechar</button>';openModal(h);
+  h+='<p class="sm mut">'+(k<todayKey()?'Fechamento preservado. Concluir ou desmarcar uma tarefa aqui corrige explicitamente os pontos deste dia.':future?'Tarefas previstas para esta data. As conclusões são registradas no dia selecionado.':'Este resumo acompanha os registros de hoje até o fechamento do dia.')+'</p><button class="bt" onclick="closeModal()">Fechar</button>';openModal(h);
 }
 function areaPoints(keys){const areas=Object.fromEntries(AREAS.map(a=>[a,0]));keys.forEach(k=>{const s=readDay(k);AREAS.forEach(a=>areas[a]+=s.areaPoints[a]||0);});return areas;}
 function monthPoints(ym){return Object.keys(S.days).filter(k=>k.startsWith(ym.slice(0,7))&&k<=todayKey()).reduce((n,k)=>n+readDay(k).earnedPoints,0);}
@@ -1784,80 +1685,6 @@ function deleteTool(id){const t=S.tools.find(t=>t.id===id);if(!t)return;if(!chan
 function editIncomeTarget(){openModal('<h2>Meta mensal de entrada</h2><label for="incomeTarget">Valor (R$)</label><input id="incomeTarget" type="number" min="1" step="0.01" inputmode="decimal" value="'+S.settings.monthlyIncomeGoal+'"><button class="bt full" onclick="saveIncomeTarget()">Salvar meta</button>');}
 function saveIncomeTarget(){const value=finiteNumber(document.getElementById('incomeTarget').value,1,1e12);if(value===null)return recError('incomeTarget','Informe uma meta maior que zero.');if(!changeState(()=>S.settings.monthlyIncomeGoal=Math.round(value*100)/100))return;closeModal();render();toast('Meta mensal atualizada');}
 
-/* ============ OBJETIVOS: AUTOMÁTICOS E COM LIMITE DE ATIVOS ============ */
-function objectiveWindow(g){
-  let start=g.start,end=g.due;
-  if(g.kind==='habit'){
-    const now=pk(g.due<todayKey()?g.due:todayKey()),periodStart=g.period==='month'?dk(new Date(now.getFullYear(),now.getMonth(),1)):graceWeekKey(dk(now)),periodEnd=g.period==='month'?dk(new Date(now.getFullYear(),now.getMonth()+1,0)):dk(addDays(pk(periodStart),6));
-    start=start>periodStart?start:periodStart;end=end<periodEnd?end:periodEnd;
-  }
-  return {start,end};
-}
-function objectiveMetric(g){
-  const window=objectiveWindow(g),end=window.end<todayKey()?window.end:todayKey();let current=0,ratio=0;
-  if(g.kind==='money'){current=S.money.filter(m=>m.type==='in'&&m.cat==='Serviço'&&!m.balanceAdjustment&&m.date>=g.start&&m.date<=end).reduce((n,m)=>n+m.value,0);ratio=current/Math.max(1,g.target);}
-  else if(g.kind==='habit'){const keys=window.start<=end?rangeKeys(window.start,end):[];current=keys.filter(k=>g.source==='dailyGoal'?readDay(k).met:readDay(k).tasks.some(t=>t.id===g.source&&t.full)).length;ratio=current/Math.max(1,g.target);}
-  else if(g.kind==='milestone'){current=g.completed?1:0;ratio=current;}
-  else{current=g.current;ratio=goalFraction(g,g.current);}
-  const days=Math.max(0,Math.round((pk(window.end)-pk(todayKey()))/864e5)),totalDays=Math.max(1,Math.round((pk(window.end)-pk(window.start))/864e5)),elapsed=Math.max(0,Math.min(1,(pk(todayKey())-pk(window.start))/864e5/totalDays)),remaining=g.kind==='number'?Math.abs(g.target-current):g.kind==='milestone'?(g.completed?0:1):Math.max(0,g.target-current),pct=Math.max(0,Math.min(100,Math.round(ratio*100)));
-  return {current,pct,ratio,days,remaining,window,elapsed,status:g.kind==='milestone'?(g.completed?'Entregue':window.end<todayKey()?'Atrasado':'No prazo'):ratio>=1?'Alcançado':window.end<todayKey()?'Atrasado':ratio>=elapsed?'No ritmo ou adiantado':'Abaixo do ritmo'};
-}
-function objectiveFinished(g){return g.kind==='habit'?(g.completed===true||(todayKey()>g.due&&objectiveMetric(g).pct>=100)):g.kind==='milestone'?g.completed:objectiveMetric(g).pct>=100;}
-function enforceObjectiveLimit(){
-  if(!Array.isArray(S.goals))return;let active=0;
-  S.goals.forEach(g=>{if(!g.paused&&!objectiveFinished(g)){active++;if(active>3){g.paused=true;g.autoPaused=true;}}});
-}
-function habitStreak(g){
-  let count=0;
-  for(let d=pk(g.due<todayKey()?g.due:todayKey()),i=0;dk(d)>=g.start&&i<36600;d=addDays(d,-1),i++){
-    const k=dk(d),s=readDay(k),t=g.source==='dailyGoal'?null:s.tasks.find(t=>t.id===g.source),done=g.source==='dailyGoal'?s.met:!!t?.full;
-    if(done)count++;else if((g.source==='dailyGoal'&&s.rest)||(g.source!=='dailyGoal'&&!t))continue;else if(i>0)break;
-  }return count;
-}
-function objectiveCard(g,paused=false){
-  const m=objectiveMetric(g),unit=g.kind==='money'?'R$':g.kind==='habit'?'vezes':g.kind==='milestone'?'entrega':g.unit||'unidades',title={money:'Dinheiro · entradas de Serviço',habit:'Hábito · '+(g.period==='month'?'por mês':'por semana'),number:'Número · ajuste manual',milestone:'Marco · entrega com data'}[g.kind];
-  let pace=m.pct>=100?'Objetivo alcançado.':g.kind==='milestone'?m.window.end<todayKey()?'A entrega está atrasada.':m.days+' dia(s) para entregar.':m.days>0?'Faltam '+(g.kind==='money'?cash(m.remaining):fmtNum(m.remaining)+' '+esc(unit))+' · '+(g.kind==='money'?cash(m.remaining/Math.max(1,m.days)):fmtNum(m.remaining/Math.max(1,m.days))+' '+esc(unit))+' por dia até '+fmtBR(m.window.end)+'.':'Prazo encerrado · faltam '+(g.kind==='money'?cash(m.remaining):fmtNum(m.remaining)+' '+esc(unit))+'.';
-  return '<article class="card objective-card"><div class="row sp"><div><h2>'+esc(g.title)+'</h2><p class="sm mut">'+esc(title)+'<br>'+fmtBR(g.start)+' a '+fmtBR(g.due)+'</p></div><button class="mini" aria-label="Editar objetivo '+esc(g.title)+'" onclick="editGoal(\''+g.id+'\')">'+icon('edit')+'</button></div><div class="row sp"><strong class="objective-value">'+(g.kind==='money'?cash(m.current):g.kind==='milestone'?(g.completed?'Entregue':'Pendente'):fmtNum(m.current))+'</strong><span class="sm">'+m.pct+'%</span></div>'+(g.kind!=='milestone'?'<p class="sm mut">Alvo: '+(g.kind==='money'?cash(g.target):fmtNum(g.target)+' '+esc(unit))+'</p>':'')+'<div class="bar"><div style="width:'+m.pct+'%"></div></div><p class="objective-status '+(m.status==='Atrasado'||m.status==='Abaixo do ritmo'?'behind':'')+'">'+(paused?'Pausado · ':'')+m.status+'</p><p class="sm mut">'+pace+'</p>'+(g.kind==='habit'?'<p class="sm">Sequência do hábito: '+habitStreak(g)+' dia(s). Fonte: '+esc(g.source==='dailyGoal'?'meta diária batida':S.tasks.find(t=>t.id===g.source)?.name||'hábito arquivado')+'.</p>':'')+(g.kind==='number'?goalChart(g)+'<button class="gh full" onclick="addProgress(\''+g.id+'\')">Ajustar valor atual</button>':g.kind==='milestone'?'<button class="gh full" onclick="toggleMilestone(\''+g.id+'\')">'+(g.completed?'Reabrir entrega':'Marcar entrega concluída')+'</button>':g.kind==='money'?'<p class="sm mut">Atualizado automaticamente pelas entradas de Serviço no período. Ajustes de saldo não entram nessa conta.</p>':'')+'<button class="mini full" onclick="toggleObjectivePause(\''+g.id+'\')">'+(paused?'Retomar objetivo':'Pausar objetivo')+'</button></article>';
-}
-function vMetas(){
-  enforceObjectiveLimit();const active=S.goals.filter(g=>!g.paused&&!objectiveFinished(g)),paused=S.goals.filter(g=>g.paused),done=S.goals.filter(g=>!g.paused&&objectiveFinished(g));
-  let h='<div class="page-heading"><h1>Objetivos</h1><p>Até três ativos para concentrar sua energia no que importa.</p></div><div class="row sp"><strong>'+active.length+' / 3 ativos</strong><button class="mini" onclick="editGoal()">+ Objetivo</button></div><p class="sm mut">Dinheiro e hábitos avançam pelos seus registros. Número permite ajuste manual. Marco acompanha uma entrega.</p>';
-  if(!S.goals.length)h+='<section class="card empty"><h2>Escolha seu próximo objetivo</h2><p class="mut">Faturar com um serviço, manter um hábito, acompanhar um número ou entregar um projeto.</p><button class="bt" onclick="editGoal()">Criar objetivo</button></section>';
-  h+=active.map(g=>objectiveCard(g)).join('');
-  if(paused.length)h+='<details class="card"><summary>Objetivos pausados ('+paused.length+')</summary><p class="sm mut">Eles continuam guardados. Retome um quando houver espaço entre os três ativos.</p>'+paused.map(g=>objectiveCard(g,true)).join('')+'</details>';
-  if(done.length)h+='<details class="card"><summary>Objetivos alcançados ('+done.length+')</summary>'+done.map(g=>objectiveCard(g)).join('')+'</details>';
-  return h;
-}
-let objectiveEditor=null;
-function editGoal(id){
-  const g=S.goals.find(g=>g.id===id)||{id:'',title:'',kind:'money',current:0,initial:0,target:210,start:todayKey(),due:dk(addDays(pk(todayKey()),30)),unit:'',period:'week',source:'dailyGoal'};
-  objectiveEditor=g.id||null;
-  openModal('<h2>'+(g.id?'Editar objetivo':'Novo objetivo')+'</h2><label for="ogTitle">O que você quer alcançar?</label><input id="ogTitle" maxlength="160" value="'+esc(g.title)+'" placeholder="Ex.: faturar com meus serviços"><label for="ogKind">Tipo</label><select id="ogKind" onchange="syncObjectiveFields(true)">'+recOptions([['money','Dinheiro — entradas de Serviço'],['habit','Hábito — contagem automática'],['number','Número — valor manual'],['milestone','Marco — entrega com prazo']],g.kind)+'</select><div class="grid2"><div><label for="ogStart">Início</label><input id="ogStart" type="date" value="'+g.start+'" max="'+todayKey()+'"></div><div><label for="ogDue">Prazo</label><input id="ogDue" type="date" value="'+g.due+'"></div></div><div id="ogNumeric"><label for="ogTarget">Valor alvo</label><input id="ogTarget" type="number" inputmode="decimal" min="0" step="any" value="'+g.target+'"><div id="ogManual"><label for="ogCurrent">Valor atual</label><input id="ogCurrent" type="number" inputmode="decimal" min="0" step="any" value="'+g.current+'"><label for="ogUnit">Unidade</label><input id="ogUnit" maxlength="30" value="'+esc(g.unit)+'" placeholder="Nota, kg, seguidores…"><p class="sm mut">O valor alvo pode ser menor que o inicial, como em uma mudança de peso.</p></div></div><div id="ogHabit"><label for="ogPeriod">Frequência do alvo</label><select id="ogPeriod">'+recOptions([['week','Vezes por semana'],['month','Vezes por mês']],g.period)+'</select><label for="ogSource">Contar automaticamente</label><select id="ogSource"><option value="dailyGoal">Dias com a meta de pontos batida</option>'+S.tasks.map(t=>'<option value="'+t.id+'" '+(t.id===g.source?'selected':'')+'>'+esc(t.name)+'</option>').join('')+(g.source!=='dailyGoal'&&!S.tasks.some(t=>t.id===g.source)?'<option selected value="'+esc(g.source)+'">Hábito arquivado</option>':'')+'</select><p class="sm mut">Cada dia conta no máximo uma vez. A contagem usa o período e os fechamentos do calendário.</p></div><p id="ogMoneyHelp" class="sm mut">Só entram recebimentos da categoria Serviço, entre o início e o prazo. Nenhum avanço manual é necessário.</p><p id="ogMilestoneHelp" class="sm mut">O nome acima é sua entrega. Marque-a como concluída quando terminar.</p>'+(g.kind==='money'&&g.legacyCurrent?'<details><summary>Valor da versão anterior</summary><p class="sm mut">O valor manual anterior ('+fmtNum(g.legacyCurrent)+') foi preservado nos dados. O indicador agora usa os recebimentos reais.</p></details>':'')+'<div class="modal-actions"><button class="gh" onclick="closeModal()">Cancelar</button><button class="bt" onclick="saveGoal(\''+g.id+'\')">Salvar objetivo</button></div>'+(g.id?'<button class="dgr full" onclick="delGoal(\''+g.id+'\')">Excluir objetivo</button>':''));
-  document.getElementById('ogSource').value=g.source||'dailyGoal';syncObjectiveFields();
-}
-function syncObjectiveFields(changed=false){
-  const kind=document.getElementById('ogKind').value;
-  if(changed&&!objectiveEditor)document.getElementById('ogTarget').value=kind==='habit'?3:kind==='number'?100:kind==='money'?210:1;
-  document.getElementById('ogNumeric').hidden=kind==='milestone';document.getElementById('ogManual').hidden=kind!=='number';document.getElementById('ogHabit').hidden=kind!=='habit';document.getElementById('ogMoneyHelp').hidden=kind!=='money';document.getElementById('ogMilestoneHelp').hidden=kind!=='milestone';
-  document.querySelector('label[for="ogTarget"]').textContent=kind==='habit'?'Quantas vezes por período?':kind==='money'?'Valor alvo (R$)':'Valor alvo';
-}
-function saveGoal(id){
-  const title=document.getElementById('ogTitle').value.trim(),kind=document.getElementById('ogKind').value,start=document.getElementById('ogStart').value,due=document.getElementById('ogDue').value,target=kind==='milestone'?1:finiteNumber(document.getElementById('ogTarget').value,kind==='number'?0:1,1e12),current=kind==='number'?finiteNumber(document.getElementById('ogCurrent').value,0,1e12):0;
-  if(!title)return recError('ogTitle','Dê um nome ao objetivo.');if(!validRecordDate(start))return recError('ogStart','Escolha uma data de início válida, até hoje.');if(!validDate(due)||due<start)return recError('ogDue','O prazo precisa ser igual ou posterior ao início.');if(target===null||(kind==='habit'&&!Number.isInteger(target)))return recError('ogTarget','Informe um alvo válido; hábitos usam números inteiros.');if(current===null)return recError('ogCurrent','Informe um número válido a partir de zero.');
-  const old=S.goals.find(g=>g.id===id),oldKind=old?.kind,source=document.getElementById('ogSource').value,period=document.getElementById('ogPeriod').value,unit=kind==='money'?'R$':kind==='habit'?'vezes':document.getElementById('ogUnit').value.trim(),active=S.goals.filter(g=>!g.paused&&!objectiveFinished(g)).length;
-  if(kind==='habit'&&source!=='dailyGoal'&&!S.tasks.some(t=>t.id===source)&&source!==old?.source)return recError('ogSource','Escolha a meta diária ou uma tarefa existente.');
-  if(!changeState(()=>{
-    const data={title,kind,type:{money:'Dinheiro',habit:'Hábito',number:'Número',milestone:'Marco'}[kind],start,due,target,current,source,period,unit};
-    if(old){Object.assign(old,data);if(oldKind!==kind)old.initial=current;if(kind==='number'){old.hist??=[];old.hist.push({d:todayKey(),v:current});}}
-    else S.goals.push({id:uid(),...data,initial:current,hist:[{d:todayKey(),v:current}],paused:active>=3,completed:false});
-  }))return;
-  closeModal();render();toast(!old&&active>=3?'Objetivo salvo nos pausados: já há três ativos.':'Objetivo salvo');
-}
-function addProgress(id){const g=S.goals.find(g=>g.id===id);if(!g||g.kind!=='number'){toast('Este objetivo avança automaticamente pelos registros.');return;}openModal('<h2>Ajustar valor atual</h2><p>'+esc(g.title)+'</p><label for="fgVal">Total atual ('+esc(g.unit||'unidades')+')</label><input id="fgVal" type="number" min="0" step="any" inputmode="decimal" value="'+g.current+'"><button class="bt full" onclick="saveProgress(\''+id+'\')">Salvar valor</button>');}
-function saveProgress(id){const g=S.goals.find(g=>g.id===id);if(!g||g.kind!=='number')return;const value=finiteNumber(document.getElementById('fgVal').value,0,1e12);if(value===null)return recError('fgVal','Informe um número válido.');if(!changeState(()=>{g.current=value;g.hist.push({d:todayKey(),v:value});}))return;closeModal();render();toast('Valor atualizado');}
-function toggleObjectivePause(id){const g=S.goals.find(g=>g.id===id);if(!g)return;if(g.paused&&S.goals.filter(x=>!x.paused&&!objectiveFinished(x)).length>=3){toast('Pause outro objetivo antes de retomar este. O limite é três ativos.');return;}if(!changeState(()=>g.paused=!g.paused))return;render();toast(g.paused?'Objetivo pausado':'Objetivo retomado');}
-function toggleMilestone(id){const g=S.goals.find(g=>g.id===id);if(!g||g.kind!=='milestone')return;if(!changeState(()=>{g.completed=!g.completed;g.completedAt=g.completed?todayKey():null;}))return;render();toast(g.completed?'Entrega concluída!':'Entrega reaberta');}
-
 /* ============ REGISTRO OPCIONAL E NOTAS ============ */
 function vReg(){
   const reg=S.ui.reg,usedTraining=S.gym.length||S.activities.length;
@@ -1937,6 +1764,144 @@ render=function(){
   const tab=S.ui.tab,b=document.getElementById('addButton'),label=tab==='metas'?'Objetivo':tab==='dinheiro'?'Lançar':tab==='registro'?(S.ui.reg==='alimentacao'?'Refeição':S.ui.reg==='treino'?'Atividade':'Nota'):tab==='hoje'?'Tarefa':'Adicionar';
   b.innerHTML=icon('plus')+'<span>'+label+'</span>';b.setAttribute('aria-label',tab==='dinheiro'?'Lançar dinheiro':label==='Adicionar'?'Abrir registro rápido':'Adicionar '+label.toLocaleLowerCase('pt-BR'));
 };
+
+/* AJUSTES DE AGENDAMENTO, OBJETIVOS E ÁREAS SEGURAS */
+function migrateSimpleApp(state){
+  state.tasks.forEach(t=>{
+    if(!t.schedule){
+      t.scheduleBackup=cloneValue({days:t.days,recurrence:t.recurrence,createdDate:t.createdDate});
+      const days=t.days||[],weekday=days.length?days[0]:pk(t.recurrence?.anchor||t.createdDate||todayKey()).getDay();
+      let date=t.recurrence?.anchor||t.createdDate||todayKey();
+      while(pk(date).getDay()!==weekday)date=dk(addDays(pk(date),1));
+      t.schedule={date,weekday,repeat:days.length>1};
+    }
+  });
+  state.goals.forEach(g=>{
+    if(g.simple)return;
+    g.objectiveBackup=cloneValue(g);
+    let value=g.current||0;
+    if(g.kind==='money')value=state.money.filter(m=>m.type==='in'&&m.cat==='Serviço'&&!m.balanceAdjustment&&m.date>=g.start&&m.date<=g.due).reduce((n,m)=>n+m.value,0);
+    if(g.kind==='habit')value=Object.keys(state.days).filter(k=>k>=g.start&&k<=g.due).filter(k=>{const s=state.days[k].summary;return g.source==='dailyGoal'?s?.met:s?.tasks?.some(t=>t.id===g.source&&t.full);}).length;
+    if(g.kind==='milestone')value=g.completed?1:0;
+    g.current=value;g.simple=true;g.paused=false;
+    if(g.targetMissing||!Number.isFinite(Number(g.target))||Number(g.target)<=0)g.target=null;
+  });
+  state.meta.simpleVersion=1;return state;
+}
+const previousSimpleNormalize=normalizeState;
+normalizeState=function(input){const r=previousSimpleNormalize(input);r.state=migrateSimpleApp(r.state);return r;};
+S=migrateSimpleApp(S);
+const previousSimpleSave=save;
+save=function(){S=migrateSimpleApp(S);return previousSimpleSave();};
+enforceObjectiveLimit=function(){};
+taskOccursOn=function(t,k){
+  if(!validDate(k))return false;
+  const s=t.schedule;if(!s)return false;
+  if(k<s.date)return false;
+  if(k===s.date)return true;
+  return s.repeat&&pk(k).getDay()===s.weekday;
+};
+recurrenceLabel=function(t){const s=t.schedule;return s?(s.repeat?'Toda semana · '+WD[s.weekday]+' · desde '+s.date:'Somente '+s.date):'Sem data';};
+function syncTaskWeekday(){const date=document.getElementById('ftDate').value;if(validDate(date))document.getElementById('ftWeekday').value=pk(date).getDay();}
+editTask=function(id){
+  const t=S.tasks.find(t=>t.id===id),s=t?.schedule||{date:todayKey(),weekday:pk(todayKey()).getDay(),repeat:false};
+  taskFormDraft={id:t?.id||uid(),isNew:!t,subs:cloneValue(t?.subs||[])};
+  openModal('<h2>'+(t?'Editar tarefa':'Nova tarefa')+'</h2><div class="task-form">'+
+    '<div><label for="ftName">Título</label><input id="ftName" maxlength="160" value="'+esc(t?.name||'')+'"></div>'+
+    '<div><label for="ftDate">Data · primeira ocorrência</label><input id="ftDate" type="date" value="'+s.date+'" onchange="syncTaskWeekday()"></div>'+
+    '<div><label for="ftWeekday">Dia da semana</label><select id="ftWeekday">'+WD.map((d,i)=>'<option value="'+i+'" '+(s.weekday===i?'selected':'')+'>'+d+'</option>').join('')+'</select></div>'+
+    '<div><label class="row" for="ftRepeat"><input id="ftRepeat" type="checkbox" role="switch" '+(s.repeat?'checked':'')+' onchange="document.getElementById(\'repeatLabel\').textContent=this.checked?\'Sim\':\'Não\'"> Repetição: <span id="repeatLabel">'+(s.repeat?'Sim':'Não')+'</span></label><p class="sm mut">A primeira ocorrência é na data escolhida. Com repetição, as seguintes usam o dia da semana selecionado.</p></div>'+
+    '<div><label for="ftTime">Horário</label><input id="ftTime" type="time" value="'+esc(t?.time||'08:00')+'"></div>'+
+    '<div><label for="ftPts">Pontos</label><input id="ftPts" type="number" min="1" max="10000" inputmode="numeric" value="'+(t?.points||20)+'"></div>'+
+    '<div><label for="ftArea">Área da vida</label><select id="ftArea">'+AREAS.map(a=>'<option '+(t?.area===a?'selected':'')+'>'+esc(a)+'</option>').join('')+'</select></div>'+
+    '<div><label for="ftSubs">Subtarefas · uma por linha</label><textarea id="ftSubs">'+esc((t?.subs||[]).map(s=>s.name).join('\n'))+'</textarea></div>'+
+    '<div><label class="row" for="ftRem"><input id="ftRem" type="checkbox" '+((t?t.remind:S.settings.lastTaskReminder!==false)?'checked':'')+'> Avisar no horário</label><p class="sm mut">Os avisos funcionam com o app aberto.</p></div></div>'+
+    '<div class="modal-actions"><button class="gh" onclick="closeModal()">Cancelar</button><button class="bt" onclick="saveTask(\''+(id||'')+'\')">Salvar tarefa</button></div>'+
+    (t?'<button class="dgr full" onclick="delTask(\''+id+'\')">Excluir tarefa</button>':''));
+};
+saveTask=function(id){
+  const name=document.getElementById('ftName').value.trim(),date=document.getElementById('ftDate').value,weekday=Number(document.getElementById('ftWeekday').value),points=Number(document.getElementById('ftPts').value),time=document.getElementById('ftTime').value;
+  if(!name)return recError('ftName','Informe o título.');
+  if(!validDate(date))return recError('ftDate','Escolha uma data válida.');
+  if(!Number.isInteger(points)||points<1||points>10000)return recError('ftPts','Use de 1 a 10.000 pontos inteiros.');
+  if(!/^\d{2}:\d{2}$/.test(time))return recError('ftTime','Informe o horário.');
+  const names=document.getElementById('ftSubs').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(names.length>50||names.some(n=>n.length>160))return recError('ftSubs','Use até 50 subtarefas de até 160 caracteres.');
+  const old=S.tasks.find(t=>t.id===id),repeat=document.getElementById('ftRepeat').checked,remind=document.getElementById('ftRem').checked;
+  if(id&&!old)return;
+  if(!changeState(()=>{
+    if(old)freezeTaskHistory(old);
+    const data={name,time,points,area:document.getElementById('ftArea').value,remind,days:[weekday],schedule:{date,weekday,repeat},recurrence:{type:'weekly',anchor:date},subs:retainedSubtasks(old?.subs||taskFormDraft?.subs||[],names),createdDate:old?.createdDate||date};
+    if(old)Object.assign(old,data);else S.tasks.push({id:taskFormDraft?.id||uid(),...data});
+    if(!old)S.settings.lastTaskReminder=remind;
+    if(date<S.settings.startedDate)S.settings.startedDate=date;
+  }))return;
+  taskFormDraft=null;closeModal();render();toast('Tarefa salva');
+};
+duplicateTask=function(id){const source=S.tasks.find(t=>t.id===id);if(!source)return;const copy=cloneValue(source);copy.id=uid();copy.name=(copy.name+' (cópia)').slice(0,160);copy.subs=copy.subs.map(s=>({id:uid(),name:s.name}));if(!changeState(()=>S.tasks.push(copy)))return;editTask(copy.id);};
+
+const previousSimpleReadDay=readDay;
+readDay=function(k){return k>todayKey()?buildDaySummary(k):previousSimpleReadDay(k);};
+objectiveMetric=function(g){const ratio=g.target>0?g.current/g.target:0;return {current:g.current,pct:Math.max(0,Math.min(100,Math.round(ratio*100))),ratio};};
+objectiveFinished=function(g){return g.target>0&&g.current>=g.target;};
+vMetas=function(){
+  return '<div class="page-heading"><h1>Objetivos</h1><p>Um passo de cada vez.</p></div><button class="bt full" onclick="editGoal()">+ Objetivo</button>'+
+  (S.goals.length?S.goals.map(g=>{const pct=objectiveMetric(g).pct;return '<section class="card simple-objective"><button class="gh full objective-open" onclick="addProgress(\''+g.id+'\')"><strong>'+esc(g.title)+'</strong><span>'+fmtNum(g.current)+' / '+(g.target>0?fmtNum(g.target):'Definir alvo')+' '+esc(g.unit||'')+'</span><span>'+pct+'%</span><span class="bar" role="progressbar" aria-label="'+esc(g.title)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><span style="display:block;height:100%;background:var(--green,#7cff9b);width:'+pct+'%"></span></span></button><button class="mini" onclick="editGoal(\''+g.id+'\')">Editar objetivo</button></section>';}).join(''):'<p class="mut">Nenhum objetivo ainda. Adicione o primeiro.</p>');
+};
+editGoal=function(id){
+ const g=S.goals.find(g=>g.id===id)||{title:'',current:0,target:'',unit:''};
+ openModal('<h2>'+(id?'Editar objetivo':'Novo objetivo')+'</h2><label for="simpleTitle">Título do objetivo</label><input id="simpleTitle" maxlength="160" value="'+esc(g.title)+'"><label for="simpleCurrent">Valor atual</label><input id="simpleCurrent" type="number" step="any" inputmode="decimal" value="'+g.current+'"><label for="simpleTarget">Valor alvo</label><input id="simpleTarget" type="number" step="any" inputmode="decimal" value="'+(g.target??'')+'"><label for="simpleUnit">Unidade (opcional)</label><input id="simpleUnit" maxlength="30" placeholder="R$, vezes, kg" value="'+esc(g.unit||'')+'"><button class="bt full" onclick="saveGoal(\''+(id||'')+'\')">Salvar objetivo</button>'+(id?'<button class="dgr full" onclick="delGoal(\''+id+'\')">Excluir objetivo</button>':''));
+};
+saveGoal=function(id){
+ const title=document.getElementById('simpleTitle').value.trim(),current=finiteNumber(document.getElementById('simpleCurrent').value,-1e12,1e12),raw=document.getElementById('simpleTarget').value,target=raw===''?null:finiteNumber(raw,Number.MIN_VALUE,1e12),unit=document.getElementById('simpleUnit').value.trim();
+ if(!title)return recError('simpleTitle','Informe o título.');
+ if(current===null)return recError('simpleCurrent','Informe um valor válido.');
+ if(raw!==''&&target===null)return recError('simpleTarget','O alvo deve ser maior que zero.');
+ if(!changeState(()=>{const g=S.goals.find(g=>g.id===id),data={title,current,target,unit,simple:true,targetMissing:target===null};if(g)Object.assign(g,data);else S.goals.push({id:uid(),...data,hist:[]});}))return;
+ closeModal();render();toast('Objetivo salvo');
+};
+addProgress=function(id){
+ const g=S.goals.find(g=>g.id===id);if(!g)return;
+ openModal('<h2>'+esc(g.title)+'</h2><p>Valor atual: '+fmtNum(g.current)+' '+esc(g.unit||'')+'</p><label for="simpleDelta">Quanto deseja somar ou subtrair?</label><input id="simpleDelta" type="number" step="any" inputmode="decimal" placeholder="Ex.: 10 ou -5"><button class="bt full" onclick="saveProgress(\''+id+'\')">Atualizar valor</button>');
+};
+saveProgress=function(id){const g=S.goals.find(g=>g.id===id),delta=finiteNumber(document.getElementById('simpleDelta').value,-1e12,1e12);if(!g||delta===null||document.getElementById('simpleDelta').value==='')return recError('simpleDelta','Informe a alteração, positiva ou negativa.');if(!changeState(()=>{g.current=Math.round((g.current+delta)*1e8)/1e8;g.hist??=[];g.hist.push({d:todayKey(),v:g.current});}))return;closeModal();render();toast('Valor atualizado');};
+const DAILY_PHRASES=[
+'Um passo pequeno ainda é um passo em frente.','Faça hoje o que aproxima você do amanhã que deseja.','A constância transforma esforço em caminho.','Você pode recomeçar a partir deste momento.','Cuide do que está ao seu alcance hoje.','Seu ritmo pode ser calmo e continuar firme.','Pequenas escolhas constroem grandes mudanças.','Termine uma coisa antes de carregar a próxima.','Descansar também faz parte do crescimento.','O próximo passo não precisa ser perfeito.',
+'Celebre o que conseguiu fazer hoje.','A disciplina cresce quando você pratica.','Comece com os recursos que já tem.','O tempo investido em você produz raízes.','Uma dificuldade não define toda a jornada.','Aprender também é uma forma de avançar.','Dê atenção ao processo de cada dia.','Seu futuro recebe as escolhas de hoje.','Seja paciente com o que está construindo.','Você pode fazer o necessário, um passo por vez.',
+'Coragem é continuar mesmo com receio.','Faça espaço para o que tem valor.','A comparação não precisa guiar seus passos.','Volte ao seu propósito quando faltar ânimo.','Um dia difícil também pode ensinar.','Transforme intenção em uma ação pequena.','A caminhada fica possível quando você começa.','Seja fiel ao compromisso de cuidar de si.','O progresso também acontece em silêncio.','Hoje é uma oportunidade de praticar novamente.',
+'Escolha uma prioridade e dê o primeiro passo.','Você não precisa resolver tudo hoje.','A repetição fortalece aquilo que importa.','Organize o presente com gentileza.','A sua atenção é um recurso precioso.','Faça uma pausa e retome com clareza.','Um hábito nasce de ações possíveis.','Sua jornada merece cuidado e perseverança.','Ajustar a rota também é avançar.','Reconheça seu esforço sem deixar de aprender.',
+'Confie no Senhor de todo o seu coração. — Provérbios 3:5','O Senhor é o meu pastor; nada me faltará. — Salmo 23:1','Tudo posso naquele que me fortalece. — Filipenses 4:13','Orai sem cessar. — 1 Tessalonicenses 5:17','Alegrai-vos sempre. — 1 Tessalonicenses 5:16','O Senhor é a minha luz e a minha salvação. — Salmo 27:1','Entrega o teu caminho ao Senhor. — Salmo 37:5','O meu socorro vem do Senhor. — Salmo 121:2','Deus é o nosso refúgio e fortaleza. — Salmo 46:1','Se Deus é por nós, quem será contra nós? — Romanos 8:31',
+'A fé é o firme fundamento das coisas que se esperam. — Hebreus 11:1','Bem-aventurados os pacificadores. — Mateus 5:9','O amor é paciente, o amor é bondoso. — 1 Coríntios 13:4','Não nos cansemos de fazer o bem. — Gálatas 6:9','Lâmpada para os meus pés é tua palavra. — Salmo 119:105','O coração alegre é bom remédio. — Provérbios 17:22','Tudo tem o seu tempo determinado. — Eclesiastes 3:1','Sede fortes, e revigore-se o vosso coração. — Salmo 31:24','O Senhor te abençoe e te guarde. — Números 6:24','A tua palavra é a verdade. — João 17:17'
+];
+function dailyPhraseIndex(k=todayKey()){const d=pk(k),serial=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);return ((serial%DAILY_PHRASES.length)+DAILY_PHRASES.length)%DAILY_PHRASES.length;}
+function dailyPhrase(){const k=todayKey(),override=S.ui.phraseOverride;return DAILY_PHRASES[override?.date===k?override.index:dailyPhraseIndex(k)];}
+function changeDailyPhrase(){const current=DAILY_PHRASES.indexOf(dailyPhrase()),index=(current+1+Math.floor(Math.random()*(DAILY_PHRASES.length-1)))%DAILY_PHRASES.length;if(!changeState(()=>S.ui.phraseOverride={date:todayKey(),index}))return;render();}
+function purposeDailyCard(){return '<section class="card"><div class="row sp"><h3>Meu porquê</h3><button class="mini" aria-label="Editar meu porquê" onclick="editPurpose()">Editar</button></div>'+(S.settings.purpose?'<p class="personal-purpose">'+esc(S.settings.purpose)+'</p>':'')+'<p>'+esc(dailyPhrase())+'</p><button class="mini" onclick="changeDailyPhrase()">Trocar frase</button></section>';}
+function toggleCalendarTask(id,k){
+ if(!validDate(k))return;
+ const s=cloneValue(readDay(k)),item=s.tasks.find(t=>t.id===id);if(!item)return;
+ const before=JSON.stringify(S);
+ const day=S.days[k]??={done:{},goalPoints:s.goalPoints,rest:s.rest,waterMl:0,waterEntries:[],reminded:{}};
+ day.done??={};
+ const full=!item.full;
+ if(full){day.done[id]={full:true,subs:(item.subs||[]).map(x=>x.id),taskName:item.name,taskPoints:item.possible,area:item.area,awardedPoints:item.possible};}else delete day.done[id];
+ item.full=full;item.points=full?item.possible:0;
+ s.earnedPoints=s.tasks.reduce((n,t)=>n+t.points,0)+(s.focus||0)*15;
+ s.completedTasks=s.tasks.filter(t=>t.full).length;s.incompleteTasks=s.tasks.length-s.completedTasks;s.met=s.earnedPoints>=s.goalPoints;s.bonusPoints=s.met?25:0;s.totalPoints=s.earnedPoints+s.bonusPoints;
+ s.areaPoints=Object.fromEntries(AREAS.map(a=>[a,0]));s.tasks.forEach(t=>{if(t.area in s.areaPoints)s.areaPoints[t.area]+=t.points;});
+ s.hasRecords=true;s.updatedAt=Date.now();s.closedAt=k<todayKey()?Date.now():null;
+ day.summary=s;day.goalPoints=s.goalPoints;day.rest=s.rest;
+ if(save()===false){S=JSON.parse(before);return;}
+ graceCache=null;render();dayDetail(k);toast(full?'Tarefa concluída neste dia':'Tarefa marcada como pendente');
+}
+let visibleDate=todayKey();
+function checkDateRollover(){if(visibleDate!==todayKey()){visibleDate=todayKey();refreshDailyHistory();save();render();}}
+setInterval(checkDateRollover,1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkDateRollover();});
+function measureAppHeader(){const header=document.getElementById('hdr');if(header)document.documentElement.style.setProperty('--header-height',header.getBoundingClientRect().height+'px');}
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(measureAppHeader).observe(document.getElementById('hdr'));
+window.addEventListener('resize',measureAppHeader);
+measureAppHeader();
 
 /* ============ INICIALIZAÇÃO E PWA ============ */
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
