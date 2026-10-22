@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="ascendIconTitle">
+  <title id="ascendIconTitle">Ascend</title>
+  <rect width="512" height="512" rx="112" fill="#0b0f14"/>
+  <path d="M156 356 256 156 356 356M194 280h124" fill="none" stroke="#7cff9b" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
