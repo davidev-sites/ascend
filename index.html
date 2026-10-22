@@ -2,13 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>EVOLVING</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230b0f14'/><path d='M26 68l16-36 16 36M33 56h18M62 32v36h16' stroke='%237cff9b' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>ASCEND</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--bg:#0b0f14;--card:#151b24;--card2:#1c2430;--txt:#e8eef7;--mut:#8b9bb0;--acc:#7cff9b;--acc2:#38d9ff;--line:#243040;--red:#ff6b6b;--yel:#ffd166}
@@ -95,8 +96,9 @@ label{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 5px;font-wei
 .dots i.on{background:var(--acc);width:20px}
 hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 </style>
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAACxElEQVR4nO3UsU0EQRREwfMxcAiXTAj2CAEhJHpuXhnlj7b/28fb+8cTqh7rB8CSAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGkCIE0ApAmANAGQJgDSBECaAEgTAGm5AD6fX/xgvZEAHP4R1psJwPHPrbcTgOOfW28oAAEIQACOXwQCEIAABCAAAQhAAAIQgAAcvwAEIAABCMDxC0AAjl8AAnD4AvhTAOt3838EIIA0AQggTQACSBOAANIEIIA0AQggTQACSBOAANIEIIA0AQggTQACSBOAANIEIIA0AQggTQACSBOAANIEIIA0AQggTQACSBOAANIEIIA0AQggTQACSBPApdbf/lUI4HLrDU4ngID1DicTQMB6h5MJIGK9xakEELHe4lQCiFhvcSoBRKy3OJUAItZbnEoAAesdTiaAgPUOJxPA5dYbnE4Al1p/+1chAMeTJgABpAlAAGkCEECaAASQJgABpAlAAGkCEECaAASQJgABpAlAAGkCEECaAASQJgABpAlAAGkCEECaAASQJgABpAlAAGkCEECaAASQJgABpAlAAGkCEECaAEj/AARAOgQBkI5AAKQjEAACuNX6cG6y3lIAAhCAAAQgAAEIQAACEIHjF4AABCAAETh+AYjA8QtACA5fAPALAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKR9AxSPf0Rty5yYAAAAAElFTkSuQmCC">
+<meta name="application-name" content="ASCEND">
+<meta name="apple-mobile-web-app-title" content="ASCEND">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAD3klEQVR4nO3TMXLbMBRFUfcp0mS52UkW6zSejMeRZEoE8MH/TnFqgsC7bz9+/nqHVG/VB4BKAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaAIgmgCIJgCiCYBoAiCaAIgmgEK/3//8U32WVAIo8Hn4X1WfLY0AFno0fCHUEMBCAtiPABZ5ZvwiWEcAiwhgTwJY4JXxi2ANASwggH0JYLIz4xfBfAKYTAB7E8BEI8YvgrkEMJEA9ieASUaOXwTzCGASAVyDACaYMX4RzCGACQRwHQIYbOb4RTCeAAYTwLUIYKAV4xfBWAIYSADXI4BBVo5fBOMIYBABXJMABjg7YhHUEcAAArguAZw0arwiqCGAkwRwbQI4YfRoRbCeAE4QwPUJ4EWzxiqCtQTwIgH0IIAXzB6pCNYRwAsE0IcAnrRqnCJYQwBPEkAvAnjC6lGKYD4BPEEA/QjgoKoximAuARwkgJ4EcED1CKu/35kADqgeYPX3OxPAN3YZ3y7n6EYA39hleLucoxsBPLDb6HY7TwcCeGC3we12ng4EcMeuY9v1XFclgDt2Hdqu57oqAdyw+8h2P9+VCOCGMwPbXfXd7kYAX1QPVARrCeCL6nEKYC0BfFI9TBGsJ4BPqkcpgPUE8KF6kCKoIYAP1WMUQA0BhI5fBAIQgAAEUD3AHVS/gQAEIAABGL8IBCAAAQhg9/FXnz3xv2YRQLOhdP2vWSID6D6S7v83kgAaDqT7/40UF0DKOFL+8ywBNB1Gyn+eFRVA2ijS/vcVAmg8iLT/fUVMAKljSP3vowTQfAip/31URADpI0j//0cEEDCA9P9/pH0AHt89PCKAkId3D7e1DsCju4/vCCDowd3H/9oG4LHdyxECCHlo93JbywA8svs5SgDNH9j9PNYuAI/rnp4hgKYP656OEUDDR3VXxwmg4aO6q+PaBfDKw1af113VEUDDR3VXx7UM4JmHrT7nDpLvqm0ARx62+nw7Sb2r1gHce9zq8+ws7a4iAoB7BEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARDtLwtm9azgcM0aAAAAAElFTkSuQmCC">
 <style>/* Interface local: mesma identidade, controles consistentes. */
 :root{color-scheme:dark;--mut:#a2b1c3;--focus:#b5ffd0;--header:#0b0f14;--nav:#0f141b;--soft:#14251d}
 :root[data-theme="light"]{color-scheme:light;--bg:#f4f6f2;--card:#fff;--card2:#edf1ed;--txt:#16241d;--mut:#526257;--acc:#176b38;--acc2:#086379;--line:#c8d3c9;--red:#b72a36;--yel:#805500;--focus:#176b38;--header:#f4f6f2;--nav:#fff;--soft:#e2efe5}
@@ -172,7 +174,7 @@ button.chk{position:relative;width:44px;height:44px;min-width:44px;min-height:44
 <body class="f2">
 <a class="skip-link" href="#view">Ir para o conteúdo</a>
 <div id="app">
-<header id="hdr"><div class="brand"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 7h15M9 16h12M9 25h15M9 7v18"/></svg>EVOLVING</div><button id="gear" aria-label="Abrir ajustes" onclick="openSettings()"></button></header>
+<header id="hdr"><div class="brand"><svg class="brand-mark" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 25 9-18 9 18M11 19h10"/></svg>ASCEND</div><button id="gear" aria-label="Abrir ajustes" onclick="openSettings()"></button></header>
 <div id="storageError" class="system-notice storage-notice" role="alert" hidden></div>
 <div id="recoveryActions" class="system-notice" hidden><button class="gh" onclick="exportDamagedData()">Baixar dados originais para recuperação</button><button class="gh" onclick="openSettings()">Abrir ajustes</button></div>
 <aside id="updateNotice" class="system-notice" hidden>Nova versão pronta. Conclua sua edição antes de atualizar.<br><button class="mini" onclick="applyUpdate()">Atualizar agora</button></aside>
@@ -183,11 +185,11 @@ button.chk{position:relative;width:44px;height:44px;min-width:44px;min-height:44
 </div>
 <div id="modal" onclick="if(event.target.id==='modal')closeModal()"><div id="modalBody" role="dialog" aria-modal="true"></div></div>
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-<div id="onb" role="dialog" aria-modal="true" aria-label="Tutorial do EVOLVING"><div id="onbBody"></div></div>
-<noscript>Ative o JavaScript no navegador para usar o EVOLVING.</noscript>
+<div id="onb" role="dialog" aria-modal="true" aria-label="Tutorial do ASCEND"><div id="onbBody"></div></div>
+<noscript>Ative o JavaScript no navegador para usar o ASCEND.</noscript>
 <script>
 /* ============ DADOS ============ */
-const KEY='evolving_app_v1';
+const KEY='evolving_app_v1'; // Chave legada: somente leitura e migração.
 const AREAS=['Saúde','Estudo','Dinheiro','Habilidades','Pessoal'];
 const CATS=['Alimentação','Transporte','Lazer','Estudo','Saúde','Compras','Outros'];
 const WD=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -238,7 +240,8 @@ const FOODS=[
 
 
 /* ============ ESTADO E ARMAZENAMENTO ============ */
-const STORAGE_KEY='br.evolving.personal.data';
+const STORAGE_KEY='ascend_app_v1';
+const LEGACY_STORAGE_KEYS=[KEY];
 const STORAGE_RECOVERY_KEY=STORAGE_KEY+'.recovery';
 const STORAGE_VERSION=2;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
@@ -246,7 +249,7 @@ let LOAD_NOTICE='';
 let STORAGE_BLOCKED=false;
 let STORAGE_ERROR='';
 const DEF=()=>({
-  meta:{app:'EVOLVING',version:STORAGE_VERSION,lastBackup:null},
+  meta:{app:'ASCEND',version:STORAGE_VERSION,lastBackup:null},
   settings:{goalPoints:100,restDays:[0],notif:false,kcal:2200,prot:120,carb:250,fat:70,purpose:'',onboarded:false,maxStreak:0,theme:'system',font:2,waterGoal:8,startedDate:todayKey(),lastBackup:'',backupSnooze:'',displayName:'',shareId:''},
   tasks:[],goals:[],gym:[],food:[],money:[],reviews:[],friends:[],bodyMetrics:[],days:{},
   ui:{tab:'hoje',reg:'academia',period:'semana',foodDay:todayKey(),moneyMonth:todayKey().slice(0,7),calMonth:todayKey().slice(0,7),taskSearch:'',taskFilter:'all',gymSearch:'',gymRange:'all',foodHistorySearch:'',foodHistoryRange:'day',moneySearch:'',moneyTypeFilter:'all',focusTimer:null}
@@ -440,7 +443,7 @@ function normalizeState(input){
     timer.token=/^[a-zA-Z0-9_-]{1,100}$/.test(timer.token||'')?timer.token:uid();
     state.ui.focusTimer=timer;
   }else state.ui.focusTimer=null;
-  state.meta=Object.assign({},stateObject(d.meta)?d.meta:{},{app:'EVOLVING',version:STORAGE_VERSION});
+  state.meta=Object.assign({},stateObject(d.meta)?d.meta:{},{app:'ASCEND',version:STORAGE_VERSION});
   state.meta.lastBackup=validRecordDate(state.meta.lastBackup)?state.meta.lastBackup:null;
   return {state,imported,skipped};
 }
@@ -453,16 +456,28 @@ function storageError(message){
 }
 function allowStorageWrite(){STORAGE_BLOCKED=false;storageError('');}
 function load(){
-  let raw,legacy=false;
+  let raw,legacy=false,copyFailed=false;
   try{
     raw=localStorage.getItem(STORAGE_KEY);
-    if(raw===null){raw=localStorage.getItem(KEY);legacy=raw!==null;}
+    if(raw===null){
+      for(const key of LEGACY_STORAGE_KEYS){
+        raw=localStorage.getItem(key);
+        if(raw!==null){legacy=true;break;}
+      }
+    }
   }catch(err){
     STORAGE_BLOCKED=true;
     LOAD_NOTICE='Não foi possível acessar o armazenamento. Seus dados desta sessão ainda podem ser exportados.';
     storageError(LOAD_NOTICE);return DEF();
   }
   if(raw===null) return DEF();
+  if(legacy){
+    try{localStorage.setItem(STORAGE_KEY,raw);}catch(err){
+      copyFailed=true;STORAGE_BLOCKED=true;
+      LOAD_NOTICE='Não foi possível copiar seus dados para o armazenamento do ASCEND. Os dados anteriores foram preservados. Exporte um backup antes de fechar o app.';
+      storageError(LOAD_NOTICE);
+    }
+  }
   try{
     const result=normalizeState(JSON.parse(raw));
     if(result.skipped&&!legacy){
@@ -471,10 +486,7 @@ function load(){
         storageError('Há itens inválidos nos dados e não foi possível guardar uma cópia de recuperação. Exporte os dados antes de importar um backup ou apagar os dados.');
       }
     }
-    if(legacy){
-      LOAD_NOTICE='Seus dados anteriores foram recuperados e atualizados. O arquivo original foi preservado.';
-      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(result.state));}catch(err){storageError('Não foi possível salvar a atualização. Exporte um backup antes de fechar o app.');}
-    }
+    if(legacy&&!copyFailed)LOAD_NOTICE='Seus dados anteriores foram copiados com segurança. O conteúdo original foi preservado.';
     if(result.skipped) LOAD_NOTICE+=(LOAD_NOTICE?' ':'')+result.skipped+' item(ns) inválido(s) foram ignorados. O conteúdo original continua guardado.';
     return result.state;
   }catch(err){
@@ -487,7 +499,7 @@ let S=load();
 function save(){
   if(STORAGE_BLOCKED){storageError(LOAD_NOTICE||'O salvamento está protegido. Importe um backup válido ou apague os dados nos ajustes.');return false;}
   try{
-    S.meta=Object.assign({},S.meta,{app:'EVOLVING',version:STORAGE_VERSION});
+    S.meta=Object.assign({},S.meta,{app:'ASCEND',version:STORAGE_VERSION});
     localStorage.setItem(STORAGE_KEY,JSON.stringify(S));storageError('');return true;
   }catch(err){
     storageError('Não foi possível salvar no aparelho. Exporte um backup agora e libere espaço ou permita o armazenamento. Mantenha esta página aberta.');
@@ -1166,7 +1178,7 @@ function weeklyReport(){
   const gym=S.gym.filter(r=>ks.includes(r.date)),money=S.money.filter(r=>ks.includes(r.date)&&r.type==='out'),foods=S.food.filter(r=>ks.includes(r.date)),cats=Object.create(null);money.forEach(m=>cats[m.cat]=(cats[m.cat]||0)+m.value);
   const exercises=[...new Set(gym.map(g=>g.ex))],changes=exercises.map(ex=>{const all=S.gym.filter(g=>g.ex===ex).sort((a,b)=>a.date.localeCompare(b.date)),inWeek=all.filter(r=>ks.includes(r.date)),before=all.filter(r=>r.date<ks[0]).at(-1),first=before||inWeek[0],last=inWeek.at(-1);return ex+': '+fmtNum(first.load)+' → '+fmtNum(last.load)+' kg';});
   const foodDays=new Set(foods.map(f=>f.date)).size,kcal=foods.reduce((s,f)=>s+f.kcal,0);
-  return 'EVOLVING · '+fmtBR(ks[0])+' a '+fmtBR(ks.at(-1))+'\n\n'+active.length+' dias ativos · '+fmtNum(total)+' pontos · '+ks.filter(metGoal).length+' metas diárias batidas.\n'+(total?'Melhor dia: '+fmtBR(sorted[0])+' ('+pointsOf(sorted[0])+' pontos). Menor pontuação: '+fmtBR(sorted.at(-1))+' ('+pointsOf(sorted.at(-1))+' pontos).':'Ainda não há pontos registrados.')+'\nÁreas com menos pontos: '+neglected.join(', ')+'.\n\nTreino: '+(changes.join('; ')||'sem registros nesta semana')+'.\nGastos por categoria: '+(Object.entries(cats).map(([c,v])=>c+' R$ '+fmtNum(v)).join('; ')||'nenhum gasto registrado')+'.\nAlimentação: '+(foodDays?fmtNum(kcal/foodDays)+' kcal em média nos '+foodDays+' dias com refeições registradas.':'sem refeições registradas.');
+  return 'ASCEND · '+fmtBR(ks[0])+' a '+fmtBR(ks.at(-1))+'\n\n'+active.length+' dias ativos · '+fmtNum(total)+' pontos · '+ks.filter(metGoal).length+' metas diárias batidas.\n'+(total?'Melhor dia: '+fmtBR(sorted[0])+' ('+pointsOf(sorted[0])+' pontos). Menor pontuação: '+fmtBR(sorted.at(-1))+' ('+pointsOf(sorted.at(-1))+' pontos).':'Ainda não há pontos registrados.')+'\nÁreas com menos pontos: '+neglected.join(', ')+'.\n\nTreino: '+(changes.join('; ')||'sem registros nesta semana')+'.\nGastos por categoria: '+(Object.entries(cats).map(([c,v])=>c+' R$ '+fmtNum(v)).join('; ')||'nenhum gasto registrado')+'.\nAlimentação: '+(foodDays?fmtNum(kcal/foodDays)+' kcal em média nos '+foodDays+' dias com refeições registradas.':'sem refeições registradas.');
 }
 function weekReviewCard(){
   let h='<section class="card"><h2>Relatório da semana</h2><p class="sm mut">Últimos 7 dias, a partir do que você registrou.</p><pre class="report">'+esc(weeklyReport())+'</pre><button class="gh full" onclick="copyText(weeklyReport())">Copiar relatório</button><h3 style="margin-top:24px">Sua reflexão</h3><label for="rvW">O que funcionou</label><textarea id="rvW"></textarea><label for="rvB">O que me travou</label><textarea id="rvB"></textarea><label for="rvF">Foco da próxima semana</label><textarea id="rvF"></textarea><button class="bt" style="margin-top:12px" onclick="saveReview()">Salvar reflexão</button></section>';
@@ -1293,7 +1305,7 @@ function applyTheme(){
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',applyTheme);
 function openSettings(){
   const s=S.settings;
-  openModal('<h2>Ajustes</h2><p class="mut sm">Seu app, do seu jeito. Salve as alterações abaixo.</p><section class="settings-group"><h3>Rotina e sequência</h3><label for="stGoal">Meta de pontos por dia</label><input id="stGoal" type="number" min="1" max="100000" value="'+s.goalPoints+'"><p class="sm mut">Tarefas e foco contam para a meta. O bônus vem depois.</p><label>Dias fixos de folga</label><div class="chips" id="stRest">'+WD.map((d,i)=>'<button class="chip '+(s.restDays.includes(i)?'on':'')+'" data-d="'+i+'" onclick="this.classList.toggle(\'on\');this.setAttribute(\'aria-pressed\',this.classList.contains(\'on\'))">'+d+'</button>').join('')+'</div><label class="row"><input id="stAutoRest" type="checkbox" '+(s.autoRest!==false?'checked':'')+'> Uma folga automática por semana</label><p class="sm mut">Protege a sequência no primeiro dia perdido da semana. Folgas não somam dias à sequência.</p><button class="gh full" onclick="markTodayRest()">'+(isRestDay(todayKey())?'Retirar folga de hoje':'Marcar apenas hoje como folga')+'</button></section><section class="settings-group"><h3>Alimentação</h3><p class="sm mut">Valores de referência pessoais, opcionais. Os dados dos alimentos são aproximados.</p><label for="stKcal">Referência de calorias (kcal)</label><input id="stKcal" type="number" min="0" value="'+s.kcal+'"><div class="grid3"><div><label for="stProt">Proteína (g)</label><input id="stProt" type="number" min="0" value="'+s.prot+'"></div><div><label for="stCarb">Carboidratos (g)</label><input id="stCarb" type="number" min="0" value="'+s.carb+'"></div><div><label for="stFat">Gordura (g)</label><input id="stFat" type="number" min="0" value="'+s.fat+'"></div></div></section><section class="settings-group"><h3>Aparência</h3><label for="stTheme">Tema</label><select id="stTheme"><option value="system" '+(s.theme==='system'?'selected':'')+'>Automático pelo sistema</option><option value="dark" '+(s.theme==='dark'?'selected':'')+'>Escuro</option><option value="light" '+(s.theme==='light'?'selected':'')+'>Claro</option></select><label for="stFont">Tamanho do texto</label><select id="stFont">'+[1,2,3].map((n)=>'<option value="'+n+'" '+((s.font||2)===n?'selected':'')+'>'+['Confortável','Padrão','Grande'][n-1]+'</option>').join('')+'</select></section><div class="modal-actions"><button class="gh" onclick="closeModal()">Fechar</button><button class="bt" onclick="saveSettings()">Salvar ajustes</button></div><section class="settings-group"><h3>Lembretes e instalação</h3><button class="gh full" onclick="askNotif()">'+(s.notif?'Notificações permitidas':'Permitir notificações')+'</button><p class="sm mut">Avisos no app funcionam com esta página aberta. A notificação do navegador também depende da permissão. Não há lembretes garantidos com o app fechado.</p><button class="gh full" onclick="showInstall()">Instalar na tela inicial</button><button class="gh full" onclick="checkUpdate()">Verificar atualização</button></section><section class="settings-group"><h3>Seus dados</h3><p class="sm mut">Guardados neste navegador. Trocar de endereço ou navegador exige exportar e importar seu backup.</p><button class="gh full" onclick="exportData()">Baixar backup JSON</button><label for="backupFile">Restaurar um backup</label><input id="backupFile" type="file" accept="application/json,.json" onchange="importData(this)"><button class="gh full" onclick="openFriends()">Amigos por código</button><button class="gh full" onclick="closeModal();showOnb()">Rever tutorial</button><button class="dgr full" onclick="resetAll()">Apagar dados deste app</button></section><p class="sm mut">EVOLVING '+APP_VERSION+' · privado e local</p>');
+  openModal('<h2>Ajustes</h2><p class="mut sm">Seu app, do seu jeito. Salve as alterações abaixo.</p><section class="settings-group"><h3>Rotina e sequência</h3><label for="stGoal">Meta de pontos por dia</label><input id="stGoal" type="number" min="1" max="100000" value="'+s.goalPoints+'"><p class="sm mut">Tarefas e foco contam para a meta. O bônus vem depois.</p><label>Dias fixos de folga</label><div class="chips" id="stRest">'+WD.map((d,i)=>'<button class="chip '+(s.restDays.includes(i)?'on':'')+'" data-d="'+i+'" onclick="this.classList.toggle(\'on\');this.setAttribute(\'aria-pressed\',this.classList.contains(\'on\'))">'+d+'</button>').join('')+'</div><label class="row"><input id="stAutoRest" type="checkbox" '+(s.autoRest!==false?'checked':'')+'> Uma folga automática por semana</label><p class="sm mut">Protege a sequência no primeiro dia perdido da semana. Folgas não somam dias à sequência.</p><button class="gh full" onclick="markTodayRest()">'+(isRestDay(todayKey())?'Retirar folga de hoje':'Marcar apenas hoje como folga')+'</button></section><section class="settings-group"><h3>Alimentação</h3><p class="sm mut">Valores de referência pessoais, opcionais. Os dados dos alimentos são aproximados.</p><label for="stKcal">Referência de calorias (kcal)</label><input id="stKcal" type="number" min="0" value="'+s.kcal+'"><div class="grid3"><div><label for="stProt">Proteína (g)</label><input id="stProt" type="number" min="0" value="'+s.prot+'"></div><div><label for="stCarb">Carboidratos (g)</label><input id="stCarb" type="number" min="0" value="'+s.carb+'"></div><div><label for="stFat">Gordura (g)</label><input id="stFat" type="number" min="0" value="'+s.fat+'"></div></div></section><section class="settings-group"><h3>Aparência</h3><label for="stTheme">Tema</label><select id="stTheme"><option value="system" '+(s.theme==='system'?'selected':'')+'>Automático pelo sistema</option><option value="dark" '+(s.theme==='dark'?'selected':'')+'>Escuro</option><option value="light" '+(s.theme==='light'?'selected':'')+'>Claro</option></select><label for="stFont">Tamanho do texto</label><select id="stFont">'+[1,2,3].map((n)=>'<option value="'+n+'" '+((s.font||2)===n?'selected':'')+'>'+['Confortável','Padrão','Grande'][n-1]+'</option>').join('')+'</select></section><div class="modal-actions"><button class="gh" onclick="closeModal()">Fechar</button><button class="bt" onclick="saveSettings()">Salvar ajustes</button></div><section class="settings-group"><h3>Lembretes e instalação</h3><button class="gh full" onclick="askNotif()">'+(s.notif?'Notificações permitidas':'Permitir notificações')+'</button><p class="sm mut">Avisos no app funcionam com esta página aberta. A notificação do navegador também depende da permissão. Não há lembretes garantidos com o app fechado.</p><button class="gh full" onclick="showInstall()">Instalar na tela inicial</button><button class="gh full" onclick="checkUpdate()">Verificar atualização</button></section><section class="settings-group"><h3>Seus dados</h3><p class="sm mut">Guardados neste navegador. Trocar de endereço ou navegador exige exportar e importar seu backup.</p><button class="gh full" onclick="exportData()">Baixar backup JSON</button><label for="backupFile">Restaurar um backup</label><input id="backupFile" type="file" accept="application/json,.json" onchange="importData(this)"><button class="gh full" onclick="openFriends()">Amigos por código</button><button class="gh full" onclick="closeModal();showOnb()">Rever tutorial</button><button class="dgr full" onclick="resetAll()">Apagar dados deste app</button></section><p class="sm mut">ASCEND '+APP_VERSION+' · privado e local</p>');
 }
 function saveSettings(){
   const oldSettings=JSON.parse(JSON.stringify(S.settings)),oldDay=S.days[todayKey()]?JSON.parse(JSON.stringify(S.days[todayKey()])):null;
@@ -1311,14 +1323,14 @@ async function askNotif(){
   try{const p=await Notification.requestPermission();S.settings.notif=p==='granted';save();toast(p==='granted'?'Notificações permitidas com o app aberto':'Você pode usar os avisos dentro do app.');}catch(e){toast('Não foi possível pedir permissão neste navegador.');}
 }
 function downloadJSON(value,name){const blob=new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-function exportData(){S.settings.lastBackup=todayKey();save();downloadJSON(S,'evolving-backup-'+todayKey()+'.json');toast('Backup gerado. Guarde o arquivo em um lugar seguro.');}
-function exportDamagedData(){try{const raw=(!STORAGE_BLOCKED&&localStorage.getItem(STORAGE_RECOVERY_KEY))||localStorage.getItem(STORAGE_KEY)||localStorage.getItem(KEY);if(raw)downloadJSON(raw,'evolving-dados-originais-'+todayKey()+'.json');}catch(e){toast('O navegador não permitiu ler o armazenamento.');}}
+function exportData(){S.settings.lastBackup=todayKey();save();downloadJSON(S,'ascend-backup-'+todayKey()+'.json');toast('Backup gerado. Guarde o arquivo em um lugar seguro.');}
+function exportDamagedData(){try{const raw=(!STORAGE_BLOCKED&&localStorage.getItem(STORAGE_RECOVERY_KEY))||localStorage.getItem(STORAGE_KEY)||localStorage.getItem(KEY);if(raw)downloadJSON(raw,'ascend-dados-originais-'+todayKey()+'.json');}catch(e){toast('O navegador não permitiu ler o armazenamento.');}}
 async function importData(input){
   const file=input.files[0];if(!file)return;
   if(file.size>20*1024*1024){toast('Esse arquivo é muito grande. Use um backup de até 20 MB.');input.value='';return;}
   try{pendingImport=normalizeState(JSON.parse(await file.text()));
     openModal('<h2>Revisar restauração</h2><p>Foram encontrados <strong>'+pendingImport.imported+' itens válidos</strong> e '+pendingImport.skipped+' itens inválidos ignorados.</p><p class="mut sm">O backup vai substituir os dados deste app. Baixe uma cópia dos dados atuais antes de continuar.</p><button class="gh full" onclick="exportData()">Baixar dados atuais</button><div class="modal-actions"><button class="gh" onclick="pendingImport=null;closeModal()">Cancelar</button><button class="bt" onclick="confirmImport()">Restaurar backup</button></div>');
-  }catch(e){toast('Backup inválido. Escolha um JSON do EVOLVING com estrutura reconhecida.');input.value='';}
+  }catch(e){toast('Backup inválido. Escolha um JSON do ASCEND com estrutura reconhecida.');input.value='';}
 }
 function confirmImport(){
   if(!pendingImport)return;const old=S,candidate=pendingImport,wasBlocked=STORAGE_BLOCKED;S=candidate.state;allowStorageWrite();
@@ -1329,20 +1341,21 @@ function resetAll(){openModal('<h2>Apagar os dados deste app?</h2><p class="mut"
 function confirmReset(){
   if(document.getElementById('resetText').value!=='APAGAR'){toast('Digite APAGAR para confirmar.');return;}
   const old=S,wasBlocked=STORAGE_BLOCKED;S=DEF();S.settings.onboarded=true;allowStorageWrite();if(!save()){S=old;STORAGE_BLOCKED=wasBlocked;return;}
-  try{localStorage.removeItem(KEY);localStorage.removeItem(STORAGE_RECOVERY_KEY);}catch(e){storageError('Os dados atuais foram apagados, mas não foi possível remover a cópia antiga. Libere o armazenamento e tente novamente.');}
+  try{localStorage.removeItem(STORAGE_RECOVERY_KEY);}catch(e){storageError('Os dados atuais foram apagados, mas não foi possível remover a cópia de recuperação do ASCEND. Libere o armazenamento e tente novamente.');}
   document.getElementById('recoveryActions').hidden=true;closeModal();render();toast('Dados deste app apagados');
 }
 function openFriends(){
-  let h='<h2>Amigos por código</h2><p class="sm mut">Um retrato manual do progresso. Nada é enviado automaticamente; só compartilhe o código com quem quiser.</p><button class="gh full" onclick="shareFriendCode()">Copiar meu resumo</button><label for="friendCode">Código recebido</label><textarea id="friendCode" placeholder="Cole o código EVOLVING2 aqui"></textarea><button class="bt" onclick="importFriendCode()">Adicionar ou atualizar amigo</button>';
+  let h='<h2>Amigos por código</h2><p class="sm mut">Um retrato manual do progresso. Nada é enviado automaticamente; só compartilhe o código com quem quiser.</p><button class="gh full" onclick="shareFriendCode()">Copiar meu resumo</button><label for="friendCode">Código recebido</label><textarea id="friendCode" placeholder="Cole o código ASCEND2 aqui"></textarea><button class="bt" onclick="importFriendCode()">Adicionar ou atualizar amigo</button>';
   S.friends.forEach(f=>{h+='<div class="friend row sp"><div><strong>'+esc(f.name)+'</strong><p class="sm mut">'+fmtNum(f.points||0)+' pontos · sequência '+(f.streak||0)+'<br>Atualizado em '+esc(f.date||'—')+'</p></div><button class="mini" onclick="removeFriend(\''+f.id+'\')">Remover</button></div>';});openModal(h);
 }
 function shareFriendCode(){openModal('<h2>Meu resumo para compartilhar</h2><label for="friendName">Como quer aparecer?</label><input id="friendName" maxlength="60" value="'+esc(S.settings.displayName||'')+'" placeholder="Seu nome ou apelido"><p class="sm mut">O código inclui apenas nome, pontos de hoje, sequência e data.</p><button class="bt" onclick="makeFriendCode()">Copiar código</button>');}
-function makeFriendCode(){const name=document.getElementById('friendName').value.trim();if(!name){toast('Informe um nome ou apelido.');return;}S.settings.displayName=name;S.settings.shareId||=uid();save();const value={id:S.settings.shareId,name,points:pointsOf(todayKey()),streak:streak(),date:todayKey()};copyText('EVOLVING2:'+btoa(unescape(encodeURIComponent(JSON.stringify(value)))));}
-function importFriendCode(){try{const text=document.getElementById('friendCode').value.trim();if(!text.startsWith('EVOLVING2:')||text.length>8000)throw 0;const f=JSON.parse(decodeURIComponent(escape(atob(text.slice(10)))));if(typeof f.name!=='string'||!f.name.trim()||typeof f.id!=='string'||!/^[a-zA-Z0-9_-]{1,80}$/.test(f.id)||!validRecordDate(f.date)||finiteNumber(f.points)===null||finiteNumber(f.streak)===null)throw 0;const clean={id:f.id,name:f.name.slice(0,60),date:f.date,points:f.points,streak:f.streak},old=S.friends.find(x=>x.id===f.id);if(old)Object.assign(old,clean);else S.friends.push(clean);save();openFriends();toast('Resumo do amigo salvo');}catch(e){toast('Código inválido. Peça um novo código ao seu amigo.');}}
+function makeFriendCode(){const name=document.getElementById('friendName').value.trim();if(!name){toast('Informe um nome ou apelido.');return;}S.settings.displayName=name;S.settings.shareId||=uid();save();const value={id:S.settings.shareId,name,points:pointsOf(todayKey()),streak:streak(),date:todayKey()};copyText('ASCEND2:'+btoa(unescape(encodeURIComponent(JSON.stringify(value)))));}
+function parseFriendCode(text){const oldPrefix=KEY.split('_app_')[0].toUpperCase()+'2:',prefix=['ASCEND2:',oldPrefix].find(p=>text.startsWith(p));if(!prefix||text.length>8000)throw new Error('Código inválido');return JSON.parse(decodeURIComponent(escape(atob(text.slice(prefix.length)))));}
+function importFriendCode(){try{const text=document.getElementById('friendCode').value.trim(),f=parseFriendCode(text);if(typeof f.name!=='string'||!f.name.trim()||typeof f.id!=='string'||!/^[a-zA-Z0-9_-]{1,80}$/.test(f.id)||!validRecordDate(f.date)||finiteNumber(f.points)===null||finiteNumber(f.streak)===null)throw 0;const clean={id:f.id,name:f.name.slice(0,60),date:f.date,points:f.points,streak:f.streak},old=S.friends.find(x=>x.id===f.id);if(old)Object.assign(old,clean);else S.friends.push(clean);save();openFriends();toast('Resumo do amigo salvo');}catch(e){toast('Código inválido. Peça um novo código ao seu amigo.');}}
 function removeFriend(id){const f=S.friends.find(x=>x.id===id);S.friends=S.friends.filter(x=>x.id!==id);save();openFriends();toast('Amigo removido',()=>{if(f&&!S.friends.some(x=>x.id===id))S.friends.push(f);});}
 function showInstall(){
   const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),local=location.protocol==='file:';
-  openModal('<h2>Leve sua rotina com você</h2>'+(local?'<p>Para instalar e ter cache offline, os três arquivos precisam ser abertos em um endereço HTTPS. Abrir só o HTML pelo gerenciador de arquivos não habilita a instalação.</p>':'<p>'+(ios?'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.':'No Chrome ou Edge, abra o menu e escolha “Instalar app” ou “Adicionar à tela inicial”.')+'</p>')+(installPrompt?'<button class="bt" onclick="installApp()">Instalar EVOLVING</button>':'')+'<p class="sm mut">Depois da primeira visita com internet, o app poderá abrir offline. Seus dados continuam neste dispositivo. Antes de mudar de endereço, exporte um backup.</p><button class="gh full" onclick="closeModal()">Entendi</button>');
+  openModal('<h2>Leve sua rotina com você</h2>'+(local?'<p>Para instalar e ter cache offline, os três arquivos precisam ser abertos em um endereço HTTPS. Abrir só o HTML pelo gerenciador de arquivos não habilita a instalação.</p>':'<p>'+(ios?'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.':'No Chrome ou Edge, abra o menu e escolha “Instalar app” ou “Adicionar à tela inicial”.')+'</p>')+(installPrompt?'<button class="bt" onclick="installApp()">Instalar ASCEND</button>':'')+'<p class="sm mut">Depois da primeira visita com internet, o app poderá abrir offline. Seus dados continuam neste dispositivo. Antes de mudar de endereço, exporte um backup.</p><button class="gh full" onclick="closeModal()">Entendi</button>');
 }
 async function installApp(){if(!installPrompt)return;await installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;closeModal();}
 async function checkUpdate(){try{const reg=await navigator.serviceWorker?.getRegistration();if(!reg){toast('Atualização disponível apenas quando o app é aberto por HTTPS ou localhost.');return;}await reg.update();toast(reg.waiting?'Nova versão pronta. Use o aviso no topo.':'Verificação concluída. Você será avisado quando houver uma nova versão.');}catch(e){toast('Não foi possível verificar. Tente de novo com internet.');}}
@@ -1356,7 +1369,7 @@ function checkReminders(){
     if(!t.remind||t.time!==hm||(S.days[k]?.done?.[t.id]?.full))return;
     const key=k+t.id+hm;window.__notified??={};if(window.__notified[key])return;window.__notified[key]=true;
     toast('Hora de: '+t.name);
-    if(S.settings.notif&&'Notification' in window&&Notification.permission==='granted')try{new Notification('EVOLVING',{body:'Hora de: '+t.name,tag:key});}catch(e){}
+    if(S.settings.notif&&'Notification' in window&&Notification.permission==='granted')try{new Notification('ASCEND',{body:'Hora de: '+t.name,tag:key});}catch(e){}
   });
 }
 setInterval(checkReminders,15000);
@@ -1366,7 +1379,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkRemin
 const ONB=[['today','Comece pelo seu dia','Crie uma tarefa, escolha quando ela se repete e quantos pontos vale. Você também pode começar com um modelo pronto.'],['target','Pequenos passos somam','Conclua tarefas ou subtarefas para ganhar pontos. Ao bater sua meta diária, você mantém a sequência e ganha uma estrela no calendário. Folgas preservam a sequência.'],['chart','Dê direção à sua evolução','Use Metas para objetivos maiores. Registre o valor atual e acompanhe seu ritmo. Em Progresso você encontra seus resultados e o relatório semanal.'],['book','Registre sem complicar','Treinos, refeições e dinheiro ficam em Registro. O botão de raio abre um registro rápido em qualquer aba. Nos Ajustes, baixe backups e personalize o app.']];
 let onbI=0;
 function showOnb(){onbI=0;document.getElementById('onb').classList.add('open');document.getElementById('app').inert=true;paintOnb();}
-function paintOnb(){const o=ONB[onbI];document.getElementById('onbBody').innerHTML='<div class="onb-logo">EVOLVING<span>Seu próximo passo começa aqui.</span></div><div class="onb-symbol">'+icon(o[0])+'</div><p class="sm mut" aria-live="polite">'+(onbI+1)+' de '+ONB.length+'</p><h2>'+o[1]+'</h2><p>'+o[2]+'</p><div class="dots" aria-hidden="true">'+ONB.map((_,i)=>'<i class="'+(i===onbI?'on':'')+'"></i>').join('')+'</div><button class="bt" onclick="nextOnb()">'+(onbI===ONB.length-1?'Começar minha rotina':'Continuar')+'</button>'+(onbI?'<button class="gh full" onclick="onbI--;paintOnb()">Voltar</button>':'')+'<button class="skip" onclick="closeOnb()">Pular tutorial</button>';document.querySelector('#onbBody .bt').focus();}
+function paintOnb(){const o=ONB[onbI];document.getElementById('onbBody').innerHTML='<div class="onb-logo">ASCEND<span>Seu próximo passo começa aqui.</span></div><div class="onb-symbol">'+icon(o[0])+'</div><p class="sm mut" aria-live="polite">'+(onbI+1)+' de '+ONB.length+'</p><h2>'+o[1]+'</h2><p>'+o[2]+'</p><div class="dots" aria-hidden="true">'+ONB.map((_,i)=>'<i class="'+(i===onbI?'on':'')+'"></i>').join('')+'</div><button class="bt" onclick="nextOnb()">'+(onbI===ONB.length-1?'Começar minha rotina':'Continuar')+'</button>'+(onbI?'<button class="gh full" onclick="onbI--;paintOnb()">Voltar</button>':'')+'<button class="skip" onclick="closeOnb()">Pular tutorial</button>';document.querySelector('#onbBody .bt').focus();}
 function nextOnb(){if(onbI<ONB.length-1){onbI++;paintOnb();}else closeOnb();}
 function closeOnb(){document.getElementById('onb').classList.remove('open');document.getElementById('app').inert=false;S.settings.onboarded=true;save();document.getElementById('view').focus();}
 
